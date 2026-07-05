@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paramètres — Togo Tech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="assets/css/pages/settings.css" />
+</head>
+<body class="app" data-page="parametres">
+  <div id="app-root"></div>
+  <div class="app-main">
+    <header class="app-header" id="app-header"></header>
+    <div class="app-content">
+      <div class="page-head">
+        <div class="page-head__text">
+          <h1 class="page-head__title">Paramètres</h1>
+          <p class="page-head__sub">Configurez votre entreprise, la facturation et l'apparence de vos PDF.</p>
+        </div>
+        <button class="btn btn--primary" id="saveSettings">Enregistrer</button>
+      </div>
+
+      <div class="settings-grid">
+        <nav class="settings-nav card" style="padding:var(--space-3)">
+          <div class="settings-nav__list">
+            <button class="settings-nav__link is-active" data-panel="entreprise">Entreprise</button>
+            <button class="settings-nav__link" data-panel="facturation">Facturation</button>
+            <button class="settings-nav__link" data-panel="pdf">PDF & Documents</button>
+            <button class="settings-nav__link" data-panel="compte">Compte</button>
+          </div>
+        </nav>
+
+        <div class="settings-content">
+          <!-- Entreprise -->
+          <div class="settings-panel is-active card" id="panel-entreprise">
+            <div class="card__body">
+              <div class="settings-section">
+                <h2 class="settings-section__title">Informations entreprise</h2>
+                <p class="settings-section__desc">Ces informations apparaissent sur vos factures et proformas.</p>
+                <div class="logo-upload" style="margin-bottom:var(--space-6)">
+                  <div class="logo-upload__preview" id="logoPreview"><img src="assets/img/logo-togotech.png" alt="Logo" id="logoImg" /></div>
+                  <div>
+                    <button class="btn btn--secondary btn--sm" id="logoUploadBtn">Changer le logo</button>
+                    <input type="file" id="logoInput" accept="image/*" hidden />
+                    <p class="field__hint">PNG ou JPG, max 2 Mo. Recommandé : 200×200 px.</p>
+                  </div>
+                </div>
+                <div class="field-row field-row--2">
+                  <div class="field"><label class="field__label">Nom de l'entreprise</label><input class="field__input" id="sCompany" /></div>
+                  <div class="field"><label class="field__label">E-mail</label><input class="field__input" id="sEmail" type="email" /></div>
+                </div>
+                <div class="field"><label class="field__label">Adresse</label><input class="field__input" id="sAddress" /></div>
+                <div class="field-row field-row--2">
+                  <div class="field"><label class="field__label">Téléphone</label><input class="field__input" id="sPhone" /></div>
+                  <div class="field"><label class="field__label">RCCM</label><input class="field__input" id="sRccm" /></div>
+                </div>
+                <div class="field"><label class="field__label">NIF</label><input class="field__input" id="sNif" /></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Facturation -->
+          <div class="settings-panel card" id="panel-facturation">
+            <div class="card__body">
+              <div class="settings-section">
+                <h2 class="settings-section__title">Numérotation & taxes</h2>
+                <p class="settings-section__desc">Préfixes et règles de numérotation automatique.</p>
+                <div class="field-row field-row--3">
+                  <div class="field"><label class="field__label">Préfixe factures</label><input class="field__input text-mono" id="sPrefixFac" /></div>
+                  <div class="field"><label class="field__label">Préfixe proformas</label><input class="field__input text-mono" id="sPrefixPro" /></div>
+                  <div class="field"><label class="field__label">Prochain numéro</label><input class="field__input text-mono" id="sNextNum" type="number" min="1" /></div>
+                </div>
+                <div class="field-row field-row--2">
+                  <div class="field"><label class="field__label">TVA par défaut (%)</label><input class="field__input" id="sTva" type="number" min="0" max="100" step="0.5" /></div>
+                  <div class="field"><label class="field__label">Devise</label><select class="field__select" id="sDevise"><option value="FCFA">FCFA</option><option value="EUR">EUR</option><option value="USD">USD</option></select></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PDF -->
+          <div class="settings-panel card" id="panel-pdf">
+            <div class="card__body">
+              <div class="settings-section">
+                <h2 class="settings-section__title">Personnalisation PDF</h2>
+                <p class="settings-section__desc">Pied de page, conditions et signature sur vos documents.</p>
+                <div class="field"><label class="field__label">Pied de page</label><input class="field__input" id="sFooter" /></div>
+                <div class="field"><label class="field__label">Conditions générales par défaut</label><textarea class="field__textarea" id="sConditions" rows="5"></textarea></div>
+                <label class="toggle" style="margin-top:var(--space-4)">
+                  <input type="checkbox" class="toggle__input" id="sSignature" />
+                  <span class="toggle__track"><span class="toggle__thumb"></span></span>
+                  Afficher la zone signature & cachet
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compte -->
+          <div class="settings-panel card" id="panel-compte">
+            <div class="card__body">
+              <div class="settings-section">
+                <h2 class="settings-section__title">Sécurité du compte</h2>
+                <p class="settings-section__desc">Gérez votre mot de passe et vos préférences de connexion.</p>
+                <div class="field"><label class="field__label">Mot de passe actuel</label><input class="field__input" type="password" placeholder="••••••••" /></div>
+                <div class="field-row field-row--2">
+                  <div class="field"><label class="field__label">Nouveau mot de passe</label><input class="field__input" type="password" /></div>
+                  <div class="field"><label class="field__label">Confirmer</label><input class="field__input" type="password" /></div>
+                </div>
+                <a href="profil.html" class="btn btn--secondary btn--sm" style="margin-top:var(--space-4)">Gérer le profil →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="assets/js/core/app.js"></script>
+  <script src="assets/js/core/auth.js"></script>
+  <script src="assets/js/core/layout.js"></script>
+  <script src="assets/js/core/components.js"></script>
+  <script src="assets/js/pages/parametres.js"></script>
+</body>
+</html>

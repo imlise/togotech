@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brouillons — Togo Tech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="assets/css/pages/list.css" />
+</head>
+<body class="app" data-page="brouillons">
+  <div id="app-root"></div>
+  <div class="app-main">
+    <header class="app-header" id="app-header"></header>
+    <div class="app-content">
+      <div class="page-head">
+        <div class="page-head__text">
+          <h1 class="page-head__title">Brouillons</h1>
+          <p class="page-head__sub">Documents non terminés — reprenez là où vous vous êtes arrêté.</p>
+        </div>
+        <a href="facture.html" class="btn btn--primary">Nouvelle facture</a>
+      </div>
+      <div class="card">
+        <div class="table-wrap" style="border:none">
+          <table class="data-table">
+            <thead><tr><th>N° Document</th><th>Type</th><th>Client</th><th>Objet</th><th>Modifié</th><th>Actions</th></tr></thead>
+            <tbody id="draftsBody"></tbody>
+          </table>
+          <div class="empty-state" id="draftsEmpty" hidden>
+            <div class="empty-state__illustration empty-state__illustration--coral">
+              <span class="empty-state__illustration__dot empty-state__illustration__dot--1"></span>
+              <span class="empty-state__illustration__dot empty-state__illustration__dot--2"></span>
+              <span class="empty-state__illustration__dot empty-state__illustration__dot--3"></span>
+              <svg class="empty-state__illustration__glyph" viewBox="0 0 24 24" fill="none"><path d="M6 4h9l3 3v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8.5 12.5h5M8.5 15.5h3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M14.5 4v3h3" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+            </div>
+            <h3 class="empty-state__title">Aucun brouillon</h3>
+            <p class="empty-state__desc">Vos documents en cours de rédaction apparaîtront ici.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="assets/js/core/app.js"></script>
+  <script src="assets/js/core/auth.js"></script>
+  <script src="assets/js/core/layout.js"></script>
+  <script src="assets/js/core/components.js"></script>
+  <script src="assets/js/pages/brouillons.js"></script>
+</body>
+</html>

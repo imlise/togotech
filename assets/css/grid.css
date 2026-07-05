@@ -1,0 +1,103 @@
+/* ═══════════════════════════════════════════════════════════════
+   TOGO TECH GROUP — 12-Column Grid System
+   ═══════════════════════════════════════════════════════════════ */
+
+.container {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--content-padding);
+}
+
+.container--wide {
+  max-width: none;
+}
+
+.container--flush {
+  padding-inline: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--grid-gap);
+  width: 100%;
+}
+
+.col-1  { grid-column: span 1; }
+.col-2  { grid-column: span 2; }
+.col-3  { grid-column: span 3; }
+.col-4  { grid-column: span 4; }
+.col-5  { grid-column: span 5; }
+.col-6  { grid-column: span 6; }
+.col-7  { grid-column: span 7; }
+.col-8  { grid-column: span 8; }
+.col-9  { grid-column: span 9; }
+.col-10 { grid-column: span 10; }
+.col-11 { grid-column: span 11; }
+.col-12 { grid-column: span 12; }
+
+@media (max-width: 1200px) {
+  .col-lg-6  { grid-column: span 6; }
+  .col-lg-12 { grid-column: span 12; }
+}
+
+@media (max-width: 1024px) {
+  .col-md-6  { grid-column: span 6; }
+  .col-md-12 { grid-column: span 12; }
+}
+
+@media (max-width: 768px) {
+  .row { gap: var(--space-4); }
+  .col-sm-12 { grid-column: span 12; }
+  [class*="col-"]:not(.col-sm-12) { grid-column: span 12; }
+}
+
+/* Layout grids */
+.grid-stats {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--grid-gap);
+  margin-bottom: var(--page-gap);
+}
+
+.grid-stats > * {
+  grid-column: span 3;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--grid-gap);
+}
+
+.grid-2 > * {
+  grid-column: span 6;
+}
+
+.grid-main-side {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--grid-gap);
+}
+
+.grid-main-side > *:first-child {
+  grid-column: span 8;
+  min-width: 0;
+}
+
+.grid-main-side > *:last-child {
+  grid-column: span 4;
+  min-width: 0;
+}
+
+@media (max-width: 1200px) {
+  .grid-stats > * { grid-column: span 6; }
+  .grid-main-side > *:first-child,
+  .grid-main-side > *:last-child { grid-column: span 12; }
+}
+
+@media (max-width: 640px) {
+  .grid-stats > * { grid-column: span 12; }
+  .grid-2 > * { grid-column: span 12; }
+}

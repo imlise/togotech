@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clients — Togo Tech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="assets/css/pages/list.css" />
+</head>
+<body class="app" data-page="clients">
+  <div id="app-root"></div>
+  <div class="app-main">
+    <header class="app-header" id="app-header"></header>
+    <div class="app-content">
+      <div class="page-head">
+        <div class="page-head__text">
+          <h1 class="page-head__title">Clients</h1>
+          <p class="page-head__sub">Gérez vos contacts et consultez leur historique de facturation.</p>
+        </div>
+        <button class="btn btn--primary" id="addClientBtn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Ajouter un client
+        </button>
+      </div>
+      <div class="list-toolbar" style="margin-bottom:var(--space-5)">
+        <div class="search search--wide">
+          <svg class="search__icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 9.5 13 13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <input type="search" class="search__input" id="clientSearch" placeholder="Rechercher un client…" />
+        </div>
+      </div>
+      <div class="clients-grid" id="clientsGrid"></div>
+      <div class="empty-state" id="clientsEmpty" hidden>
+        <div class="empty-state__illustration empty-state__illustration--amber">
+          <span class="empty-state__illustration__dot empty-state__illustration__dot--1"></span>
+          <span class="empty-state__illustration__dot empty-state__illustration__dot--2"></span>
+          <span class="empty-state__illustration__dot empty-state__illustration__dot--3"></span>
+          <svg class="empty-state__illustration__glyph" viewBox="0 0 24 24" fill="none"><circle cx="9.5" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 19c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="9" r="2.6" stroke="currentColor" stroke-width="1.4"/><path d="M14.8 19c.4-2.4 2-4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+        <h3 class="empty-state__title">Aucun client</h3>
+        <p class="empty-state__desc">Ajoutez votre premier client pour accélérer la création de factures.</p>
+      </div>
+    </div>
+  </div>
+  <script src="assets/js/core/app.js"></script>
+  <script src="assets/js/core/auth.js"></script>
+  <script src="assets/js/core/layout.js"></script>
+  <script src="assets/js/core/components.js"></script>
+  <script src="assets/js/pages/clients.js"></script>
+</body>
+</html>

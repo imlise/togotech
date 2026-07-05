@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profil — Togo Tech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="assets/css/pages/settings.css" />
+</head>
+<body class="app" data-page="profil">
+  <div id="app-root"></div>
+  <div class="app-main">
+    <header class="app-header" id="app-header"></header>
+    <div class="app-content">
+      <div class="page-head">
+        <div class="page-head__text">
+          <h1 class="page-head__title">Mon profil</h1>
+          <p class="page-head__sub">Informations personnelles et préférences.</p>
+        </div>
+        <button class="btn btn--primary" id="saveProfile">Enregistrer</button>
+      </div>
+
+      <div class="card profile-header">
+        <div class="profile-avatar-wrap">
+          <div class="avatar avatar--lg avatar--mint" id="profileAvatar">A</div>
+          <button class="profile-avatar-edit" aria-label="Changer l'avatar">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 1l3 3-6 6H2V7L8 1Z" stroke="currentColor" stroke-width="1.2"/></svg>
+          </button>
+        </div>
+        <div>
+          <div class="profile-name" id="profileName">Admin</div>
+          <div class="profile-email" id="profileEmail">admin@togotech.com</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card__header"><h2 class="card__title">Informations</h2></div>
+          <div class="card__body">
+            <div class="field"><label class="field__label">Nom complet</label><input class="field__input" id="pName" /></div>
+            <div class="field"><label class="field__label">E-mail</label><input class="field__input" id="pEmail" type="email" readonly style="background:var(--tt-gray-50)" /></div>
+            <div class="field"><label class="field__label">Téléphone</label><input class="field__input" id="pPhone" type="tel" /></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card__header"><h2 class="card__title">Préférences</h2></div>
+          <div class="card__body">
+            <div class="field"><label class="field__label">Langue</label><select class="field__select" id="pLang"><option value="fr">Français</option><option value="en">English</option></select></div>
+            <div class="field"><label class="field__label">Fuseau horaire</label><select class="field__select" id="pTz"><option value="Africa/Lome">Africa/Lomé (GMT+0)</option><option value="Europe/Paris">Europe/Paris</option></select></div>
+            <label class="toggle" style="margin-top:var(--space-4)">
+              <input type="checkbox" class="toggle__input" id="pNotif" checked />
+              <span class="toggle__track"><span class="toggle__thumb"></span></span>
+              Recevoir les notifications par e-mail
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="assets/js/core/app.js"></script>
+  <script src="assets/js/core/auth.js"></script>
+  <script src="assets/js/core/layout.js"></script>
+  <script src="assets/js/core/components.js"></script>
+  <script src="assets/js/pages/profil.js"></script>
+</body>
+</html>

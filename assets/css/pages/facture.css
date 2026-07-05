@@ -1,0 +1,921 @@
+/* TOGO TECH — Invoice Editor & Modern Proforma PDF */
+
+.invoice-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  height: calc(100vh - var(--header-height));
+  width: 100%;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Chaque colonne (formulaire / aperçu) a sa propre hauteur fixe et son
+   propre scroll interne : la page elle-même ne défile jamais, donc la
+   barre de scroll du formulaire reste collée au formulaire (à gauche)
+   et celle de l'aperçu reste collée à l'aperçu (à droite), au lieu
+   d'une unique barre de scroll de page tout à droite de l'écran. */
+.invoice-editor {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-6);
+  border-right: 1px solid var(--color-border-subtle);
+  background: var(--color-bg-subtle);
+  min-width: 0;
+  height: 100%;
+  container-type: inline-size;
+  container-name: editor-pane;
+}
+
+.invoice-preview {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-muted);
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+.preview-toolbar__label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.preview-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.preview-zoom {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  min-width: 40px;
+  text-align: center;
+}
+
+.preview-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-6);
+  display: flex;
+  justify-content: safe center;
+  min-width: 0;
+}
+
+.preview-page-wrap {
+  position: relative;
+  flex: none;
+  transition: width var(--duration-normal) var(--ease-out), height var(--duration-normal) var(--ease-out);
+}
+
+/* ── PDF Page (proforma moderne) ──
+   Taille A4 FIXE et non responsive : le document ne doit jamais se
+   réagencer selon la largeur de l'écran ou du conteneur (ce serait
+   incohérent entre l'éditeur, l'aperçu historique et le PDF exporté).
+   L'adaptation à l'écran se fait uniquement via zoom (transform: scale).
+
+   Important : .pdf-page est positionné en absolute avec transform-origin
+   top left, et c'est .preview-page-wrap (son parent) qui reçoit la taille
+   PIXEL réelle et déjà mise à l'échelle (voir applyZoom() en JS). Sans ça,
+   le navigateur continue de réserver l'espace de mise en page à la taille
+   NON réduite (794px) même quand la page est visuellement réduite à 65% :
+   ça crée un vide fantôme et un centrage/débordement incohérents. */
+/* ── Le document facturé ignore TOUJOURS le thème sombre de l'appli ──
+   Un document professionnel envoyé à un client ne doit jamais avoir
+   l'air d'avoir été généré en mode sombre — ni à l'aperçu, ni à
+   l'impression, ni dans le PDF téléchargé. C'est déjà garanti par
+   construction : .pdf-page a son propre fond blanc fixe et son propre
+   texte navy fixe (--tt-navy-*, --paper-gray-*), jamais liés aux tokens
+   --color-*/--neutral-* qui basculent avec [data-theme="dark"].
+   Ce bloc verrouille cette garantie de façon explicite et permanente :
+   même si un futur ajout de code venait à référencer par erreur un
+   token sensible au thème à l'intérieur de .pdf-page, il serait
+   automatiquement ramené à sa valeur CLAIRE ici, quel que soit le thème
+   actif sur le reste de l'application. */
+:root[data-theme="dark"] .pdf-page {
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #F9FAFB;
+  --color-text-primary: #0B1220;
+  --color-text-secondary: #4B5563;
+  --color-text-tertiary: #6B7280;
+  --color-border: #E5E7EB;
+  --color-border-subtle: rgba(17, 24, 39, 0.06);
+  --color-border-strong: #D1D5DB;
+  --neutral-0: #FFFFFF;
+  --neutral-50: #F9FAFB;
+  --neutral-100: #F3F4F6;
+  --neutral-150: #ECEEF1;
+  --neutral-200: #E5E7EB;
+}
+
+.pdf-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  transition: transform var(--duration-normal) var(--ease-out);
+  width: 210mm;
+  flex: none;
+  min-height: 297mm;
+  background: white;
+  box-shadow: var(--shadow-xl);
+  padding: 10mm 14mm 8mm;
+  font-size: 9px;
+  color: var(--tt-navy-950);
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-accent-bar {
+  height: 3px;
+  background: linear-gradient(90deg, var(--tt-navy-950) 0%, var(--tt-navy-950) 55%, var(--brand-blue-500) 55%, var(--brand-blue-500) 100%);
+  border-radius: 2px;
+  margin-bottom: 4mm;
+}
+
+.pdf-top {
+  display: grid;
+  grid-template-columns: 1.1fr 1.4fr;
+  gap: 4mm;
+  align-items: start;
+  margin-bottom: 3mm;
+}
+
+.pdf-brand-block {
+  display: flex;
+  gap: 3mm;
+  align-items: flex-start;
+}
+
+.pdf-logo {
+  width: 18mm;
+  height: 18mm;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+
+.pdf-logo img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  /* object-fit reste en filet de sécurité pour l'affichage écran, mais on
+     ne s'appuie plus dessus : certains moteurs d'impression de Chrome/Edge
+     ignorent object-fit uniquement lors de l'impression, ce qui étirait le
+     logo pour remplir la boîte carrée au lieu de garder ses proportions.
+     max-width/max-height + width/height:auto donne le même résultat visuel
+     mais avec un support universel, y compris à l'impression. */
+  object-fit: contain;
+}
+
+.pdf-company-name {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--tt-navy-950);
+  display: block;
+  letter-spacing: -0.02em;
+}
+
+.pdf-company-tagline {
+  display: block;
+  font-size: 7px;
+  font-weight: 600;
+  color: var(--tt-navy-700);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1mm;
+  line-height: 1.35;
+}
+
+.pdf-company-info span {
+  display: block;
+  font-size: 7.5px;
+  color: var(--paper-gray-600);
+  margin-top: 0.5mm;
+}
+
+.pdf-company-info a {
+  color: var(--tt-navy-700);
+  text-decoration: none;
+}
+
+.pdf-tagline-block {
+  text-align: right;
+}
+
+.pdf-tagline-main {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--tt-navy-950);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+}
+
+.pdf-tagline-sub {
+  font-size: 7px;
+  color: var(--tt-navy-700);
+  margin-top: 1mm;
+  letter-spacing: 0.02em;
+}
+
+.pdf-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 1fr;
+  gap: 2.5mm;
+  margin-bottom: 3mm;
+}
+
+.pdf-meta-box {
+  border: 1px solid var(--paper-gray-300);
+  border-radius: 3px;
+  padding: 2.5mm 3mm;
+  min-height: 16mm;
+}
+
+.pdf-meta-box--center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-color: var(--tt-navy-800);
+  background: var(--paper-gray-50);
+}
+
+.pdf-meta-box__label {
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paper-gray-500);
+  margin-bottom: 1mm;
+}
+
+.pdf-meta-box__value {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--tt-navy-950);
+}
+
+.pdf-meta-box__doc-type {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--tt-navy-950);
+  text-transform: uppercase;
+}
+
+.pdf-meta-box__doc-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tt-navy-950);
+  margin-top: 1mm;
+}
+
+.pdf-meta-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 2mm;
+  font-size: 7.5px;
+  margin-bottom: 0.8mm;
+}
+
+.pdf-meta-line__label { color: var(--paper-gray-500); font-weight: 600; }
+.pdf-meta-line__value { font-weight: 600; color: var(--tt-navy-950); text-align: right; }
+
+.pdf-section-band {
+  background: linear-gradient(90deg, var(--tt-gold-300), var(--tt-gold-400));
+  color: var(--tt-navy-950);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1.8mm 3mm;
+  border-radius: 2px;
+  margin-bottom: 3mm;
+}
+
+.pdf-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-bottom: 4mm;
+  font-size: 8px;
+}
+
+.pdf-table th {
+  background: var(--tt-navy-950);
+  color: white;
+  padding: 2mm 2mm;
+  text-align: left;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.pdf-table th:first-child { border-radius: 3px 0 0 0; }
+.pdf-table th:last-child { border-radius: 0 3px 0 0; text-align: right; }
+
+.pdf-table td {
+  padding: 2.2mm 2mm;
+  border-bottom: 1px solid var(--paper-gray-200);
+  vertical-align: middle;
+}
+
+.pdf-table td:last-child {
+  text-align: right;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+}
+
+.pdf-table .pdf-th-ref { width: 12mm; }
+.pdf-table .pdf-th-qty,
+.pdf-table .pdf-th-pu,
+.pdf-table .pdf-th-rem { text-align: center; width: 11mm; }
+.pdf-table th:last-child,
+.pdf-table td:last-child { width: 22mm; }
+
+.pdf-table td:nth-child(2) {
+  width: auto;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.pdf-table td:nth-child(4),
+.pdf-table td:nth-child(5) { text-align: center; }
+
+.pdf-line-desc {
+  display: flex;
+  align-items: center;
+  gap: 2mm;
+  min-width: 0;
+}
+
+.pdf-line-desc span {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.pdf-line-img {
+  width: 12mm;
+  height: 12mm;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 2px;
+  border: 1px solid var(--paper-gray-200);
+  flex-shrink: 0;
+}
+
+.pdf-bottom {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 4mm;
+  margin-bottom: 4mm;
+}
+
+.pdf-conditions {
+  font-size: 7.5px;
+  color: var(--paper-gray-600);
+}
+
+.pdf-conditions-title {
+  font-weight: 800;
+  color: var(--tt-navy-950);
+  margin-bottom: 1.5mm;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pdf-conditions-text { white-space: pre-line; line-height: 1.65; }
+
+.pdf-conditions-text .hl-blue { color: var(--tt-navy-700); font-weight: 600; }
+.pdf-conditions-text .hl-accent { color: var(--accent-coral-600); font-weight: 600; }
+
+.pdf-totals {
+  border: 1px solid var(--paper-gray-200);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.pdf-total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.8mm 3mm;
+  font-size: 8px;
+  border-bottom: 1px solid var(--paper-gray-200);
+  background: var(--paper-gray-50);
+}
+
+.pdf-total-row:last-child { border-bottom: none; }
+
+.pdf-total-final {
+  font-size: 10px;
+  font-weight: 800;
+  color: white;
+  background: var(--tt-navy-950);
+  border-bottom: none;
+}
+
+.pdf-amount-words {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--tt-navy-800);
+  margin-bottom: 4mm;
+  padding: 2mm 3mm;
+  background: rgba(0, 8, 57, 0.04);
+  border-left: 3px solid var(--tt-navy-950);
+  border-radius: 0 3px 3px 0;
+  line-height: 1.5;
+}
+
+.pdf-signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6mm;
+  margin-bottom: 3mm;
+}
+
+.pdf-signature-block {
+  font-size: 7.5px;
+}
+
+.pdf-signature-label {
+  font-weight: 700;
+  color: var(--tt-navy-950);
+  margin-bottom: 1.5mm;
+}
+
+.pdf-signature-box {
+  height: 16mm;
+  border: 1px dashed var(--paper-gray-300);
+  border-radius: 3px;
+  background: var(--paper-gray-50);
+}
+
+.pdf-footer {
+  margin-top: auto;
+  padding-top: 3mm;
+  border-top: 2px solid var(--tt-navy-950);
+  font-size: 6.5px;
+  color: var(--paper-gray-500);
+  text-align: center;
+  line-height: 1.55;
+}
+
+.pdf-footer strong { color: var(--tt-navy-950); }
+
+.pdf-footer-banks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2mm;
+  margin-top: 1.5mm;
+}
+
+.pdf-footer-banks span {
+  font-weight: 600;
+  color: var(--paper-gray-500);
+}
+
+.pdf-footer-banks img {
+  height: 5mm;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Form sections */
+.form-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  margin-bottom: var(--space-5);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+
+.form-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.form-section__title {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.form-section__step {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--brand-blue-600);
+  background: rgba(27, 139, 218, 0.1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+}
+
+/* Mode nuit : le bleu de marque foncé devient illisible sur un fond de
+   carte sombre — on éclaircit vers une teinte plus claire, toujours
+   bleue, mais avec assez de luminosité pour rester visible. */
+:root[data-theme="dark"] .form-section__step {
+  color: var(--brand-blue-300);
+  background: rgba(27, 139, 218, 0.16);
+}
+
+.lines-editor { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.line-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 52px 64px 90px 64px 90px 36px;
+  gap: var(--space-2);
+  align-items: start;
+  padding: var(--space-3);
+  background: var(--tt-gray-50);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-fast);
+  min-width: 0;
+}
+
+.line-row > * {
+  min-width: 0;
+}
+
+.line-row textarea,
+.line-row input,
+.line-row label,
+.line-row button {
+  min-width: 0;
+}
+
+.line-row:hover { border-color: var(--color-border); }
+
+.line-row .field__input {
+  height: 36px;
+  font-size: var(--text-xs);
+  box-shadow: none;
+}
+
+.line-row .field__textarea {
+  height: auto;
+  min-height: 56px;
+  max-height: 220px;
+  resize: vertical;
+  padding: var(--space-2);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  box-shadow: none;
+  overflow-y: auto;
+}
+
+.line-img-upload {
+  width: 52px;
+  height: 36px;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+  overflow: hidden;
+  transition: all var(--duration-fast);
+}
+
+.line-img-upload:hover {
+  border-color: var(--brand-blue-500);
+  color: var(--brand-blue-600);
+  background: rgba(27, 139, 218, 0.06);
+}
+
+:root[data-theme="dark"] .line-img-upload:hover {
+  color: var(--brand-blue-300);
+  background: rgba(27, 139, 218, 0.14);
+}
+
+.line-img-upload img { width: 100%; height: 100%; object-fit: cover; }
+
+.line-del {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-tertiary);
+  align-self: center;
+  transition: all var(--duration-fast);
+}
+
+.line-del:hover { background: var(--color-error-bg); color: var(--color-error); }
+
+.totals-panel {
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: linear-gradient(135deg, var(--tt-navy-950), var(--tt-navy-800));
+  border-radius: var(--radius-md);
+  color: white;
+}
+
+.totals-panel__row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  font-size: var(--text-sm);
+  color: rgba(255,255,255,.7);
+}
+
+.totals-panel__row--final {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: white;
+  border-top: 1px solid rgba(255,255,255,.15);
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+}
+
+.totals-panel__row--final span:last-child { color: var(--tt-mint-400); }
+
+/* ── Éditeur : toolbar d'en-tête ──
+   Remplace l'ancienne barre de 5 boutons sticky en bas de formulaire
+   (fragile en scroll, désordonnée) : les actions qui comptent vraiment
+   (brouillon / PDF / enregistrer) restent dans l'en-tête, toujours
+   visibles, jamais de saut ni de recouvrement pendant le scroll. */
+.editor-toolbar { row-gap: var(--space-3); }
+
+.editor-toolbar__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.editor-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.editor-toolbar__divider {
+  width: 1px;
+  height: 22px;
+  background: var(--color-border);
+  margin: 0 var(--space-1);
+}
+
+/* Lien discret pour une action rare et sans danger immédiat :
+   pas de bouton plein qui rivalise visuellement avec Enregistrer/PDF. */
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  padding: var(--space-2) 0;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.btn-link:hover { color: var(--color-text-secondary); }
+.btn-link--danger:hover { color: var(--color-error); }
+
+.form-actions-bar {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-5) 0 var(--space-2);
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+@media (max-width: 640px) {
+  .editor-toolbar__actions { width: 100%; }
+  .editor-toolbar__actions .segmented { flex: 1; }
+}
+
+/* ── Réactivité de la coquille applicative (panneau éditeur / aperçu) ──
+   Ceci ne touche QUE la disposition de l'application (empiler l'éditeur
+   au-dessus de l'aperçu). Le contenu du document (.pdf-page) lui-même
+   n'est JAMAIS modifié ici : il garde toujours sa taille A4 fixe, avec
+   scroll horizontal + vertical si nécessaire (voir .preview-scroll). */
+@media (max-width: 1200px) {
+  .app-content.app-content--flush {
+    padding-inline: var(--space-4);
+  }
+
+  .invoice-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .invoice-editor {
+    height: auto;
+  }
+
+  .invoice-preview {
+    position: relative;
+    top: 0;
+    height: auto;
+    min-height: auto;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .preview-scroll {
+    padding: var(--space-4);
+  }
+
+  .invoice-editor {
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+}
+
+@media (max-width: 640px) {
+  .invoice-editor { padding: var(--space-4); }
+
+  .preview-toolbar {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .preview-toolbar__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* ── Champs "Lignes de produits" : réagissent à l'espace RÉEL du
+   panneau éditeur (container query), pas à la largeur de l'écran.
+   C'est ce qui évite le bug où la description se retrouvait écrasée
+   sur ~20px alors que l'écran était pourtant large : le panneau éditeur
+   ne fait que la moitié de l'écran, donc c'est SA largeur qui compte. */
+@container editor-pane (max-width: 780px) {
+  .line-row {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-areas:
+      "ref ref ref"
+      "desc desc desc"
+      "img qty pu"
+      "rem total del";
+  }
+
+  .line-row .line-ref { grid-area: ref; }
+  .line-row .field__textarea,
+  .line-row textarea { grid-area: desc; }
+  .line-row .line-img-upload { grid-area: img; width: 100%; }
+  .line-row .line-qty { grid-area: qty; }
+  .line-row .line-pu { grid-area: pu; }
+  .line-row .line-rem { grid-area: rem; }
+  .line-row .line-total { grid-area: total; }
+  .line-row .line-del { grid-area: del; width: 100%; }
+}
+
+@container editor-pane (max-width: 460px) {
+  .line-row {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "ref"
+      "desc"
+      "img"
+      "qty"
+      "pu"
+      "rem"
+      "total"
+      "del";
+  }
+
+  .line-row > * { width: 100%; }
+  .line-row .line-img-upload { width: 100%; height: 44px; }
+  .line-row .line-del { justify-self: stretch; }
+}
+
+@media print {
+  @page { size: A4; margin: 0; }
+
+  /* Sans ceci, la plupart des navigateurs suppriment les couleurs de
+     fond (bandeau doré, en-tête de tableau, total TTC, barre d'accent…)
+     à l'impression, même si elles s'affichent très bien à l'écran.
+     C'est la cause principale du "aperçu avant impression tout en noir
+     et blanc" : ce n'est pas un réglage utilisateur, il faut le forcer
+     nous-mêmes en CSS pour que l'impression corresponde à l'aperçu en direct. */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  .invoice-editor, .preview-toolbar, .editor-toolbar { display: none !important; }
+  .invoice-layout { display: block; margin: 0; }
+  .invoice-preview { height: auto; background: white; }
+  .preview-scroll { padding: 0; overflow: visible; }
+  .preview-page-wrap { width: auto !important; height: auto !important; }
+  .pdf-page { position: static !important; transform: none !important; box-shadow: none !important; }
+
+  /* ── Pied de page à l'impression ──
+     Ce qui se passait précédemment : `min-height: 297mm` (hauteur d'une
+     feuille A4 exacte) additionné aux marges d'impression réelles du
+     navigateur/pilote d'imprimante (qui ne sont jamais EXACTEMENT 0, à
+     cause des arrondis d'unité mm→px selon la résolution) dépassait tout
+     juste une page physique — le surplus, même de quelques dixièmes de
+     millimètre, suffit à faire basculer TOUT ce qui suit sur une 2e
+     page (une page ne se coupe jamais "à moitié", le moindre débordement
+     envoie le bloc entier plus loin).
+     Première tentative de correction : supprimer `min-height` à
+     l'impression. Résultat : plus de page 2, mais le document s'arrête
+     en haut de la feuille avec un grand vide en dessous — different de
+     l'aperçu à l'écran, qui montre toujours une page "pleine".
+     Bonne solution : garder l'aspect page pleine (comme à l'écran), mais
+     viser 290mm plutôt que 297mm exactement — une marge de sécurité de
+     7mm qui absorbe largement ces arrondis, invisible à l'œil, et qui
+     élimine le risque de basculement sur une 2e page. Le pied de page
+     retrouve son `margin-top: auto` d'origine (comme à l'écran) pour
+     rester ancré en bas de cette hauteur, au lieu d'un espacement fixe
+     qui le laissait "flotter" juste sous les signatures. */
+  .pdf-page {
+    min-height: 290mm !important;
+    padding-bottom: 8mm !important;
+  }
+
+  .pdf-footer {
+    margin-top: auto !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Empêche le navigateur de couper un bloc au milieu entre deux pages
+     (c'est ce qui envoyait le logo "Banques : Orabank" tout seul sur
+     une 2e page alors que le reste du pied de page tenait sur la 1re). */
+  .pdf-top,
+  .pdf-meta-grid,
+  .pdf-section-band,
+  .pdf-table tr,
+  .pdf-bottom,
+  .pdf-amount-words,
+  .pdf-signatures,
+  .pdf-footer,
+  .pdf-footer-banks {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* ── Page "Détail document" (historique) : n'imprimer que la facture,
+     pas le titre, les boutons d'action ni les cartes Informations/Historique. */
+  [data-page="historique"] .page-head,
+  [data-page="historique"] .doc-detail-grid > *:nth-child(2),
+  [data-page="historique"] .card__header {
+    display: none !important;
+  }
+
+  [data-page="historique"] .doc-detail-grid {
+    display: block;
+  }
+
+  [data-page="historique"] .card {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  [data-page="historique"] .card__body {
+    padding: 0 !important;
+    background: transparent !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Détail document — Togo Tech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="assets/css/pages/settings.css" />
+  <link rel="stylesheet" href="assets/css/pages/facture.css" />
+</head>
+<body class="app" data-page="historique">
+
+  <div id="app-root"></div>
+  <div class="app-main">
+    <header class="app-header" id="app-header"></header>
+    <div class="app-content" id="docContent">
+      <div class="empty-state"><div class="skeleton skeleton-card" style="width:100%;height:400px"></div></div>
+    </div>
+  </div>
+
+  <script src="assets/js/core/app.js"></script>
+  <script src="assets/js/core/auth.js"></script>
+  <script src="assets/js/core/layout.js"></script>
+  <script src="assets/js/core/components.js"></script>
+  <script src="assets/js/modules/invoice-template.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="assets/js/modules/pdf-export.js"></script>
+  <script src="assets/js/pages/document.js"></script>
+</body>
+</html>
