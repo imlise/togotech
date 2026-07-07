@@ -49,7 +49,7 @@ async function main() {
     // 4️⃣ READ BY NAME
     console.log('\n🔍 4. Fetching client by name ("Entreprise Alpha")...');
 
-    const clientByName = await clientService.getClientByClientname(
+    const clientByName = await clientService.getClientByName(
       "Entreprise Alpha"
     );
 

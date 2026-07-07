@@ -1,5 +1,7 @@
+import 'dotenv/config';
 import * as produitService from '../services/produits';
 import { enregistrerImage, remplacerImage } from "../utils/images";
+
 
 async function main() {
   console.log('\n========== 🧪 TESTS PRODUITS ==========\n');
@@ -7,7 +9,7 @@ async function main() {
   try {
 
     const image = await enregistrerImage(
-    "/Users/oth/Documents/der Krieg/Facturation/rec/src/tests/images/laptop.jpeg"
+    `${process.env.produit_image_path}/src/tests/images/laptop.jpeg`
 );
     // 1️⃣ CREATE
     console.log('📝 1. Creating products...');
@@ -20,7 +22,7 @@ async function main() {
     });
 
     const image2 = await enregistrerImage(
-    "/Users/oth/Documents/der Krieg/Facturation/rec/src/tests/images/mouse.jpeg"
+   `${process.env.produit_image_path}/src/tests/images/mouse.jpeg`
 );
 
     await produitService.createProduit({
@@ -31,7 +33,7 @@ async function main() {
       reduction: 5,
     });
     const image3 = await enregistrerImage(
-    "/Users/oth/Documents/der Krieg/Facturation/rec/src/tests/images/keyboard.jpeg"
+    `${process.env.produit_image_path}/src/tests/images/keyboard.jpeg`
 );
     await produitService.createProduit({
       nom: 'Keyboard',
@@ -73,7 +75,7 @@ async function main() {
     const updatedProduit = await produitService.getProduitById(1);
     const updatedImage = await remplacerImage(
     updatedProduit!.image,
-    "/Users/oth/Documents/der Krieg/Facturation/rec/src/tests/images/laptop2.jpeg"
+    `${process.env.produit_image_path}/src/tests/images/laptop2.jpeg`
 );
 
     await produitService.updateProduit(1, {

@@ -11,8 +11,13 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const assetsPath = path.join(__dirname, "..", "assets"); // Construit le chemin vers le dossier ../assets depuis src/
+
+app.use("/assets", express.static(assetsPath));
 
 // fichiers statiques
 app.use(express.static(path.join(__dirname, "public")));

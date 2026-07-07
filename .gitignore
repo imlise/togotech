@@ -4,8 +4,8 @@ jspm_packages/
 web_modules/
 perso/
 
-src/tests/images/*
-assets/images/*
+# src/tests/images/*
+# assets/images/*
 
 # Logs and Debug
 logs
