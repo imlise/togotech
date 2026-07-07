@@ -46,6 +46,7 @@ window.TTLayout = (function () {
     {
       label: 'Gestion',
       items: [
+        { id: 'produits', href: 'produits.html', label: 'Produits', icon: 'produits' },
         { id: 'clients', href: 'clients.html', label: 'Clients', icon: 'clients' },
         { id: 'notifications', href: 'notifications.html', label: 'Notifications', icon: 'notifications', countKey: 'notifs' },
         { id: 'parametres', href: 'parametres.html', label: 'Paramètres', icon: 'parametres' },

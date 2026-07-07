@@ -1,0 +1,53 @@
+import { integer,int,real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+
+
+export const facturesTable = sqliteTable("factures", {
+	id: int().primaryKey({ autoIncrement: true }),
+	reference: text().notNull(),
+	totalHt: real("total_ht").notNull(),
+	tva: integer().default(18).notNull(),
+	totalTtc: real("total_ttc").notNull(),
+	dateEcheance: integer("date_echeance",{ mode: 'timestamp' }),
+	dateDePaiement: integer("date_de_paiement",{ mode: 'timestamp' }),
+	isProforma: integer("is_proforma",{mode : 'boolean'}).notNull(),
+	validite: integer().notNull(),
+	dateDeLivraison: integer("date_de_livraison",{ mode: 'timestamp' }),
+	garantie: text().notNull(),
+	client: integer("client_id").references(() => clientsTable.id),
+},
+);
+
+export const clientsTable = sqliteTable("clients",{
+	id : int().primaryKey({autoIncrement:true}),
+	nom: text().notNull().unique(),
+	email:text().notNull().unique(),
+
+})
+
+export const produitsTable = sqliteTable("produits", {
+	id: integer().primaryKey({ autoIncrement: true }),
+	nom: text().notNull(),
+	description: text().notNull(),
+	image: text().notNull(),
+	prixUnitaire: real("prix_unitaire").notNull(),
+	reduction: integer().notNull(),
+},
+);
+
+export const utilisateursTable = sqliteTable("utilisateurs", {
+	id: integer().primaryKey({ autoIncrement: true }),
+	nomUtilisateur: text("nom_utilisateur").notNull().unique(),
+	email: text().notNull().unique(),
+	motDePasse: text("mot_de_passe").notNull(),
+	role: text({ enum: ["admin", "user"] }).notNull(),
+	actif: integer({mode: "boolean",}).notNull().default(true),
+});
+
+export const ligneProduitsTable = sqliteTable("ligne_produit",{
+	id: integer().primaryKey({autoIncrement:true}),
+	factureId: integer("facture_id").references(() => facturesTable.id),
+	produitId: integer("produit_id").references(() => produitsTable.id),
+	nombre: integer().notNull()
+})
+

@@ -39,31 +39,67 @@
   emailEl.addEventListener('blur', () => setFieldError('emailField', 'emailError', validateEmail(emailEl.value.trim())));
   passEl.addEventListener('blur', () => setFieldError('passwordField', 'passwordError', validatePassword(passEl.value)));
 
-  document.getElementById('loginForm').addEventListener('submit', async e => {
+  document
+  .getElementById("loginForm")
+  .addEventListener("submit", async (e) => {
     e.preventDefault();
-    const banner = document.getElementById('formErrorBanner');
-    banner.classList.remove('is-visible');
 
-    const eErr = validateEmail(emailEl.value.trim());
-    const pErr = validatePassword(passEl.value);
-    setFieldError('emailField', 'emailError', eErr);
-    setFieldError('passwordField', 'passwordError', pErr);
+    const banner = document.getElementById("formErrorBanner");
+    banner.classList.remove("is-visible");
+
+    const email = emailEl.value.trim();
+    const password = passEl.value;
+
+    const eErr = validateEmail(email);
+    const pErr = validatePassword(password);
+
+    setFieldError("emailField", "emailError", eErr);
+    setFieldError("passwordField", "passwordError", pErr);
+
     if (eErr || pErr) return;
 
-    const btn = document.getElementById('submitBtn');
-    btn.classList.add('is-loading');
+    const btn = document.getElementById("submitBtn");
+    btn.classList.add("is-loading");
     btn.disabled = true;
 
     try {
-      await new Promise(r => setTimeout(r, 1200));
-      sessionStorage.setItem('tt_mock_auth', '1');
-      sessionStorage.setItem('tt_user_email', emailEl.value.trim());
-      window.location.href = 'dashboard.html';
-    } catch {
-      banner.textContent = 'Une erreur est survenue. Réessayez.';
-      banner.classList.add('is-visible');
+      const response = await fetch("http://127.0.0.1:3000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          motDePasse: password,
+        }),
+      });
+
+      const data = await response.json();
+      console.log(data);
+
+      if (!response.ok) {
+        throw new Error(data.message || "Erreur de connexion");
+      }
+
+      // Stockage session côté front (optionnel)
+      sessionStorage.setItem("tt_mock_auth", "1");
+      sessionStorage.setItem("tt_user_email", email);
+
+      // si backend retourne utilisateur
+      if (data.utilisateur) {
+        sessionStorage.setItem(
+          "tt_user",
+          JSON.stringify(data.utilisateur)
+        );
+      }
+
+      window.location.href = "dashboard.html";
+    } catch (err) {
+      banner.textContent =
+        err.message || "Une erreur est survenue. Réessayez.";
+      banner.classList.add("is-visible");
     } finally {
-      btn.classList.remove('is-loading');
+      btn.classList.remove("is-loading");
       btn.disabled = false;
     }
   });
