@@ -44,6 +44,42 @@
       </div>
     </div>
   </div>
+
+
+  <!-- Modal Suppression -->
+<div id="deleteModal" class="modal hidden">
+  <div class="modal-content">
+    <p>Voulez-vous vraiment supprimer ce produit ?</p>
+
+    <div class="modal-actions">
+      <button id="confirmDelete" class="btn btn--danger">Supprimer</button>
+      <button id="cancelDelete" class="btn btn--secondary">Annuler</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- Modal Modification -->
+<div id="editModal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Modifier produit</h3>
+
+    <input type="text" id="editNom" />
+    <input type="number" id="editPrix" />
+    <input type="number" id="editReduction" />
+    <textarea id="editDescription"></textarea>
+
+    <div class="modal-actions">
+      <button id="saveEdit" class="btn btn--primary">Enregistrer</button>
+      <button id="cancelEdit" class="btn btn--secondary">Annuler</button>
+    </div>
+  </div>
+</div>
+
+
+
   <script src="assets/js/core/app.js"></script>
   <script src="assets/js/core/auth.js"></script>
   <script src="assets/js/core/layout.js"></script>
