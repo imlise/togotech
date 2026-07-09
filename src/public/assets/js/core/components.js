@@ -63,8 +63,8 @@ window.TTComponents = (function () {
         onClose: () => resolve(false),
       });
 
-      document.getElementById('modalCancel').addEventListener('click', () => { closeModal(); resolve(false); });
-      document.getElementById('modalConfirm').addEventListener('click', () => { closeModal(); resolve(true); });
+      document.getElementById('modalCancel').addEventListener('click', () => {  resolve(false); closeModal();});
+      document.getElementById('modalConfirm').addEventListener('click', () => { resolve(true); closeModal(); });
     });
   }
 

@@ -1,145 +1,94 @@
-// routes/produits.ts
-
 import express from "express";
-import {
-  createProduit,
-  getAllProduits,
-  getProduitById,
-  getProduitByName,
-  updateProduit,
-  deleteProduit,
-} from "../services/produits";
+import { db } from "../db/db";
+import { produitsTable } from "../db/schema";
+import { eq, InferInsertModel } from "drizzle-orm";
+import { upload } from "../middlewares/uploads"; // adapte le chemin
 
 const router = express.Router();
 
 
-// GET /api/produits
+// CREATE (avec image)
+router.post("/", upload.single("image"), async (req, res) => {
+  try {
+    const { nom, description, prixUnitaire } = req.body;
+
+    const image = req.file ? req.file.filename : null;
+
+    const result = await db.insert(produitsTable).values({
+      nom,
+      description,
+      image,
+      prixUnitaire: Number(prixUnitaire)
+    }).returning().get();
+
+    res.json(result);
+  } catch (err) {
+  if (err instanceof Error) {
+    res.status(500).json({ error: err.message });
+  } else {
+    res.status(500).json({ error: 'Une erreur inconnue est survenue' });
+  }
+}
+});
+
+
+// READ ALL
 router.get("/", async (req, res) => {
-  try {
-    const produits = await getAllProduits();
-    res.status(200).json(produits);
-  } catch (error) {
-    res.status(500).json({
-      message: "Erreur lors de la récupération des produits.",
-      error,
-    });
-  }
+  const data = await db.select().from(produitsTable);
+  res.json(data);
 });
 
 
-
-
-// GET /api/produits/nom/:nom
-router.get("/nom/:nom", async (req, res) => {
-  try {
-    const { nom } = req.params;
-
-    const produit = await getProduitByName(nom);
-
-    if (!produit) {
-      return res.status(404).json({
-        message: "Produit introuvable.",
-      });
-    }
-
-    res.status(200).json(produit);
-  } catch (error) {
-    res.status(500).json({
-      message: "Erreur lors de la récupération du produit.",
-      error,
-    });
-  }
-});
-
-
-// GET /api/produits/:id
+// READ ONE
 router.get("/:id", async (req, res) => {
-  try {
-    const id = Number(req.params.id);
+  const data = await db
+    .select()
+    .from(produitsTable)
+    .where(eq(produitsTable.id, Number(req.params.id))).get();
 
-    if (isNaN(id)) {
-      return res.status(400).json({
-        message: "ID invalide.",
-      });
-    }
-
-    const produit = await getProduitById(id);
-
-    if (!produit) {
-      return res.status(404).json({
-        message: "Produit introuvable.",
-      });
-    }
-
-    res.status(200).json(produit);
-  } catch (error) {
-    res.status(500).json({
-      message: "Erreur lors de la récupération du produit.",
-      error,
-    });
-  }
+    if (!data) return res.status(404).json({ error: "Not found" });
+  res.json(data);
 });
 
 
-
-// POST /api/produits
-router.post("/", async (req, res) => {
+// UPDATE
+router.put("/:id", upload.single("image"), async (req, res) => {
   try {
-    const result = await createProduit(req.body);
+    const { nom, description, prixUnitaire } = req.body;
 
-    res.status(201).json(result);
-  } catch (error) {
-    res.status(500).json({
-      message: "Erreur lors de la création du produit.",
-      error,
-    });
-  }
-});
+    const updateData: Partial<InferInsertModel<typeof produitsTable>> = {
+  nom,
+  description,
+  prixUnitaire: Number(prixUnitaire)
+};
 
-
-// PUT /api/produits/:id
-router.put("/:id", async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-
-    if (isNaN(id)) {
-      return res.status(400).json({
-        message: "ID invalide.",
-      });
+    if (req.file) {
+      updateData.image = req.file.filename;
     }
 
-    const result = await updateProduit(id, req.body);
+    const result = await db
+      .update(produitsTable)
+      .set(updateData)
+      .where(eq(produitsTable.id, Number(req.params.id)))
+      .returning();
 
-    res.status(200).json(result);
-  } catch (error) {
-    res.status(500).json({
-      message: "Erreur lors de la mise à jour du produit.",
-      error,
-    });
-  }
+    res.json(result[0]);
+  }  catch (err) {
+  if (err instanceof Error) {
+    res.status(500).json({ error: err.message });
+  } else {
+    res.status(500).json({ error: 'Une erreur inconnue est survenue' });
+  }}
 });
 
 
-// DELETE /api/produits/:id
+// DELETE
 router.delete("/:id", async (req, res) => {
-  try {
-    const id = Number(req.params.id);
+  await db
+    .delete(produitsTable)
+    .where(eq(produitsTable.id, Number(req.params.id)));
 
-    if (isNaN(id)) {
-      return res.status(400).json({
-        message: "ID invalide.",
-      });
-    }
-
-    const result = await deleteProduit(id);
-
-    res.status(200).json(result);
-  } catch (error) {
-    res.status(500).json({
-      message: "Erreur lors de la suppression du produit.",
-      error,
-    });
-  }
+  res.json({ success: true });
 });
 
 export default router;

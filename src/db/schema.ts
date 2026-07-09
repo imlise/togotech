@@ -29,9 +29,8 @@ export const produitsTable = sqliteTable("produits", {
 	id: integer().primaryKey({ autoIncrement: true }),
 	nom: text().notNull(),
 	description: text().notNull(),
-	image: text().notNull(),
+	image: text(),
 	prixUnitaire: real("prix_unitaire").notNull(),
-	reduction: integer().notNull(),
 },
 );
 

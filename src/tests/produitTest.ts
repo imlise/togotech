@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import * as produitService from '../services/produits';
-import { enregistrerImage, remplacerImage } from "../utils/images";
 
 
 async function main() {

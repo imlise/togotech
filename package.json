@@ -15,7 +15,7 @@
     "tsx": "^4.22.4"
   },
   "scripts": {
-    "dev": "npx tsx src/index.ts",
+    "dev": "npx tsx watch src/index.ts",
     "test:produits": "npx tsx src/tests/produitTest.ts",
     "test:utilisateurs": "npx tsx src/tests/utilisateurTest.ts",
     "test:factures": "npx tsx src/tests/factureTest.ts",
