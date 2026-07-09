@@ -61,7 +61,7 @@ function mapFactureToDoc(f) {
     objet: f.objet,
     montant: f.totalTtc,
     devise: 'FCFA',
-    date: f.createdAt ? new Date(f.createdAt) : null,
+    date: f.dateDePaiement ? new Date(f.createdAt) : null,
     status: f.dateDePaiement ? 'paid' : 'sent',
   };
 }

@@ -1,6 +1,12 @@
 'use strict';
 
-document.addEventListener('DOMContentLoaded', () => {
+const API_BASE = 'http://localhost:3000/api';
+
+let facturesCache = [];
+let clientsCache = [];
+let currentPeriod = '6months';
+
+document.addEventListener('DOMContentLoaded', async () => {
   TTLayout.initShell({ page: 'dashboard' });
 
   const header = document.getElementById('app-header');
@@ -9,11 +15,76 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   initGreeting();
-  renderStats();
+
+  try {
+    const [factures, clients] = await Promise.all([fetchFactures(), fetchClients()]);
+    facturesCache = factures;
+    clientsCache = clients;
+  } catch (err) {
+    console.error(err);
+    Toast.error('Impossible de charger les documents.');
+  }
+
+  await renderStats();
   renderRecentDocs();
   renderActivity();
-  initChart();
+  initChart(currentPeriod);
+
+  document.querySelectorAll('[data-period]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-period]').forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      initChart(btn.dataset.chartPeriod);
+    });
+  });
 });
+
+// --- Appels API ---
+
+async function fetchFactures() {
+  const response = await fetch(`${API_BASE}/factures`);
+  if (!response.ok) throw new Error('Erreur lors du chargement des factures.');
+  return response.json();
+}
+
+async function fetchClients() {
+  const response = await fetch(`${API_BASE}/clients`);
+  if (!response.ok) throw new Error('Erreur lors du chargement des clients.');
+  return response.json();
+}
+
+async function fetchFactureStats() {
+  const response = await fetch(`${API_BASE}/factures/stats`);
+  if (!response.ok) throw new Error('Erreur lors du chargement des statistiques.');
+  return response.json(); // { totalDocs, totalProforma, totalFactures, chiffreAffaireMois }
+}
+
+async function fetchRevenueStats(period = '6months') {
+  const response = await fetch(`${API_BASE}/factures/revenue?period=${period}`);
+  if (!response.ok) throw new Error('Erreur lors du chargement du chiffre d\'affaires.');
+  return response.json(); // [{ month: "2026-07", total: 141600 }, ...]
+}
+
+// --- Aides ---
+
+function clientName(clientId) {
+  const c = clientsCache.find(c => c.id === clientId);
+  return c ? c.nom : '—';
+}
+
+function getDocs() {
+  return facturesCache
+    .map(f => ({
+      id: f.id,
+      numero: f.reference,
+      type: f.isProforma ? 'proforma' : 'facture',
+      client: clientName(f.client),
+      objet: f.objet,
+      montant: f.totalTtc,
+      date: f.dateEcheance ? new Date(f.dateEcheance) : null,
+    }))
+    .sort((a, b) => (b.date?.getTime() || 0) - (a.date?.getTime() || 0));
+}
 
 function initGreeting() {
   const el = document.getElementById('dashGreeting');
@@ -25,10 +96,26 @@ function initGreeting() {
   el.textContent = `${g}, ${name} — voici la situation de votre entreprise aujourd'hui.`;
 }
 
-function renderStats() {
-  const stats = TT.getStats();
+// --- Cartes de stats ---
+
+async function renderStats() {
   const grid = document.getElementById('statsGrid');
   if (!grid) return;
+
+  let stats;
+  try {
+    const s = await fetchFactureStats();
+    stats = {
+      factures: s.totalFactures,
+      proformas: s.totalProforma,
+      total: s.totalDocs,
+      revenue: s.chiffreAffaireMois,
+    };
+  } catch (err) {
+    console.error(err);
+    Toast.error('Impossible de charger les statistiques.');
+    stats = { factures: 0, proformas: 0, total: 0, revenue: 0 };
+  }
 
   const cards = [
     {
@@ -74,73 +161,99 @@ function renderStats() {
 function animateCounters(els) {
   const easeOut = t => 1 - Math.pow(1 - t, 3);
   els.forEach(el => {
-    const target = parseInt(el.dataset.count, 10);
-    const isCurr = el.dataset.currency === 'true';
+    const target = parseInt(el.dataset.count, 10) || 0;
     const start = performance.now();
     const dur = 1200;
     function step(now) {
       const p = Math.min((now - start) / dur, 1);
       const v = Math.round(easeOut(p) * target);
-      el.textContent = isCurr ? TT.formatNumber(v) : TT.formatNumber(v);
+      el.textContent = TT.formatNumber(v);
       if (p < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
   });
 }
 
+// --- Documents récents ---
+
 function renderRecentDocs() {
   const tbody = document.getElementById('recentBody');
   if (!tbody) return;
-  const docs = TT.getDocs().slice(0, 6);
+  const docs = getDocs().slice(0, 6);
   tbody.innerHTML = docs.map(d => `
     <tr style="cursor:pointer" onclick="location.href='document.html?id=${d.id}'">
       <td class="td-mono">${d.numero}</td>
       <td><span class="badge badge--${d.type}">${d.type === 'facture' ? 'Facture' : d.type === 'proforma' ? 'Proforma' : 'Devis'}</span></td>
       <td class="truncate" style="max-width:160px">${d.client}</td>
       <td class="td-mono">${TT.formatCurrency(d.montant)}</td>
-      <td class="text-secondary">${TT.formatDate(d.date)}</td>
+      <td class="text-secondary">${d.date ? TT.formatDate(d.date) : '—'}</td>
     </tr>
   `).join('');
 }
 
+// --- Activité ---
+
 function renderActivity() {
   const list = document.getElementById('activityList');
   if (!list) return;
-  const notifs = TT.getNotifications().slice(0, 5);
-  const docs = TT.getDocs().slice(0, 3);
+  const docs = getDocs().slice(0, 6);
 
-  const items = [
-    ...docs.map(d => ({
-      text: `<strong>${d.numero}</strong> créé pour ${d.client}`,
-      time: TT.formatDate(d.date),
-      dot: '',
-    })),
-    ...notifs.map(n => ({
-      text: n.message,
-      time: TT.formatDateTime(n.createdAt),
-      dot: 'info',
-    })),
-  ].slice(0, 6);
-
-  if (!items.length) {
+  if (!docs.length) {
     list.innerHTML = '<div class="empty-state" style="padding:var(--space-8)"><p class="text-secondary">Aucune activité récente</p></div>';
     return;
   }
 
-  list.innerHTML = items.map(i => `
+  list.innerHTML = docs.map(d => `
     <div class="activity-item">
-      <span class="activity-item__dot${i.dot ? ' activity-item__dot--' + i.dot : ''}"></span>
+      <span class="activity-item__dot"></span>
       <div class="activity-item__content">
-        <div class="activity-item__text">${i.text}</div>
-        <div class="activity-item__time">${i.time}</div>
+        <div class="activity-item__text"><strong>${d.numero}</strong> créé pour ${d.client}</div>
+        <div class="activity-item__time">${d.date ? TT.formatDate(d.date) : '—'}</div>
       </div>
     </div>
   `).join('');
 }
 
-function initChart() {
+// --- Graphique ---
+
+async function initChart(period = currentPeriod) {
+  currentPeriod = period;
   const canvas = document.getElementById('revenueChart');
   if (!canvas) return;
+
+  let stats;
+  try {
+    stats = await fetchRevenueStats(period);
+  } catch (err) {
+    console.error(err);
+    Toast.error('Impossible de charger le chiffre d\'affaires.');
+    stats = [];
+  }
+
+  const { labels, values } = buildMonthSeries(stats, period === '12months' ? 12 : 6);
+  drawChart(canvas, labels, values);
+}
+
+function buildMonthSeries(apiStats, count) {
+  const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+  const statsMap = new Map(apiStats.map(s => [s.month, s.total]));
+
+  const now = new Date();
+  const labels = [];
+  const values = [];
+
+  // Correction : utiliser 'count' au lieu de 6
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    labels.push(monthNames[d.getMonth()]);
+    values.push(statsMap.get(key) || 0);
+  }
+
+  return { labels, values };
+}
+
+function drawChart(canvas, months, values) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.parentElement.getBoundingClientRect();
@@ -148,25 +261,15 @@ function initChart() {
   canvas.height = rect.height * dpr;
   ctx.scale(dpr, dpr);
 
-  const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'];
-  const docs = TT.getDocs();
-  const values = months.map((_, i) => {
-    return docs.filter(d => {
-      const m = new Date(d.date).getMonth();
-      return m === i;
-    }).reduce((s, d) => s + d.montant, 0) || Math.round(800000 + Math.random() * 1500000);
-  });
-
   const W = rect.width;
   const H = rect.height;
   const pad = { t: 20, r: 20, b: 36, l: 60 };
   const chartW = W - pad.l - pad.r;
   const chartH = H - pad.t - pad.b;
-  const max = Math.max(...values) * 1.1;
+  const max = Math.max(...values, 1) * 1.1;
 
   ctx.clearRect(0, 0, W, H);
 
-  // Grid lines
   ctx.strokeStyle = '#E2E8F0';
   ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
@@ -182,7 +285,6 @@ function initChart() {
     ctx.fillText(TT.formatNumber(Math.round(val / 1000)) + 'k', pad.l - 8, y + 4);
   }
 
-  // Area gradient
   const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + chartH);
   grad.addColorStop(0, 'rgba(0, 148, 255, 0.18)');
   grad.addColorStop(1, 'rgba(0, 148, 255, 0)');
@@ -200,7 +302,6 @@ function initChart() {
   ctx.fillStyle = grad;
   ctx.fill();
 
-  // Line
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
   for (let i = 1; i < points.length; i++) {
@@ -213,7 +314,6 @@ function initChart() {
   ctx.lineWidth = 2.5;
   ctx.stroke();
 
-  // Dots
   points.forEach(p => {
     ctx.beginPath();
     ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
@@ -226,7 +326,6 @@ function initChart() {
     ctx.stroke();
   });
 
-  // Labels
   ctx.fillStyle = '#64748B';
   ctx.font = '11px Inter, sans-serif';
   ctx.textAlign = 'center';
@@ -235,4 +334,8 @@ function initChart() {
   });
 }
 
-window.addEventListener('resize', TT.debounce(initChart, 200));
+
+
+
+
+window.addEventListener('resize', TT.debounce(() => initChart(currentPeriod), 200));

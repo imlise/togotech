@@ -127,7 +127,6 @@ export async function getFacturesStats() {
 }
 
 
-
 export async function getRevenueStats(period: '6months' | '12months' = '6months') {
   const months = period === '12months' ? 12 : 6;
 

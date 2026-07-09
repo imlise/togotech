@@ -88,9 +88,18 @@ router.get("/:id", async (req, res) => {
 
 
 // POST /api/factures
+function toTimestamp(dateString?: string) {
+  return dateString ? new Date(dateString).getTime() : null;
+}
 router.post("/", async (req, res) => {
   try {
-    const facture = req.body;
+    const body = req.body;
+    const facture = {
+      ...body,
+      dateEcheance: toTimestamp(body.dateEcheance),
+      dateDePaiement: toTimestamp(body.dateDePaiement),
+      dateDeLivraison: toTimestamp(body.dateDeLivraison),
+    };
 
     const result = await createFacture(facture);
 
