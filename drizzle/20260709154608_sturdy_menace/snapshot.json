@@ -1,9 +1,9 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "339cb47d-b19b-4be6-b2ff-312ed4d2ed2c",
+  "id": "06efd82b-6a29-4dfb-9a30-3beb0d71ca61",
   "prevIds": [
-    "eabead06-0dee-4311-8953-a13a0cd49e0b"
+    "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
     {
@@ -48,11 +48,21 @@
     },
     {
       "type": "text",
-      "notNull": true,
+      "notNull": false,
       "autoincrement": false,
       "default": null,
       "generated": null,
       "name": "email",
+      "entityType": "columns",
+      "table": "clients"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "phone",
       "entityType": "columns",
       "table": "clients"
     },
@@ -73,6 +83,16 @@
       "default": null,
       "generated": null,
       "name": "reference",
+      "entityType": "columns",
+      "table": "factures"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "objet",
       "entityType": "columns",
       "table": "factures"
     },
@@ -157,6 +177,16 @@
       "table": "factures"
     },
     {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "(current_timestamp)",
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "factures"
+    },
+    {
       "type": "text",
       "notNull": true,
       "autoincrement": false,
@@ -213,6 +243,16 @@
       "default": null,
       "generated": null,
       "name": "nombre",
+      "entityType": "columns",
+      "table": "ligne_produit"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "reduction",
       "entityType": "columns",
       "table": "ligne_produit"
     },
@@ -451,6 +491,12 @@
       "name": "utilisateurs_email_unique",
       "entityType": "uniques",
       "table": "utilisateurs"
+    },
+    {
+      "value": "\"reduction\" >= 0 AND \"reduction\" <= 100",
+      "name": "reduction_digits",
+      "entityType": "checks",
+      "table": "ligne_produit"
     }
   ],
   "renames": []

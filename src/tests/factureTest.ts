@@ -19,6 +19,7 @@ async function main() {
       dateDeLivraison: new Date("2026-07-08"),
       garantie: "12 mois",
       client: 1,
+      objet:"test_objet",
     });
 
     await factureService.createFacture({

@@ -1,1 +1,0 @@
-ALTER TABLE `produits` DROP COLUMN `reduction`;

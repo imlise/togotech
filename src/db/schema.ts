@@ -6,7 +6,7 @@ import { integer,int,real, sqliteTable, text, check } from "drizzle-orm/sqlite-c
 export const facturesTable = sqliteTable("factures", {
 	id: int().primaryKey({ autoIncrement: true }),
 	reference: text().notNull(),
-	objet:text().notNull(),
+	objet:text(),
 	totalHt: real("total_ht").notNull(),
 	tva: integer().default(18).notNull(),
 	totalTtc: real("total_ttc").notNull(),
@@ -14,11 +14,11 @@ export const facturesTable = sqliteTable("factures", {
 	dateDePaiement: integer("date_de_paiement",{ mode: 'timestamp' }),
 	isProforma: integer("is_proforma",{mode : 'boolean'}).notNull(),
 	validite: integer().notNull(),
-	dateDeLivraison: integer("date_de_livraison",{ mode: 'timestamp' }),
+	dateDeLivraison: integer("date_de_livraison",{ mode : 'timestamp' }),
+	createdAt: integer("created_at",{ mode : 'timestamp'}).notNull().default(sql`(current_timestamp)`),
 	garantie: text().notNull(),
 	client: integer("client_id").references(() => clientsTable.id),
-},
-);
+},);
 
 export const clientsTable = sqliteTable("clients",{
 	id : int().primaryKey({autoIncrement:true}),
@@ -26,7 +26,7 @@ export const clientsTable = sqliteTable("clients",{
 	email:text().unique(),
 	phone:text(),
 
-})
+});
 
 export const produitsTable = sqliteTable("produits", {
 	id: integer().primaryKey({ autoIncrement: true }),
@@ -51,7 +51,7 @@ export const ligneProduitsTable = sqliteTable("ligne_produit",{
 	factureId: integer("facture_id").references(() => facturesTable.id),
 	produitId: integer("produit_id").references(() => produitsTable.id),
 	nombre: integer().notNull(),
-	 reduction: integer("reduction").default(0)
+	reduction: integer("reduction").default(0),
   },
   (table) => ({
     reductionDigits: check(
