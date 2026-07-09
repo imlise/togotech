@@ -7,6 +7,8 @@ import {
   getFactureById,
   updateFacture,
   deleteFacture,
+  getFacturesStats,
+  getRevenueStats,
 } from "../services/factures";
 
 const router = express.Router();
@@ -24,6 +26,36 @@ router.get("/", async (req, res) => {
     });
   }
 });
+
+
+// GET /api/factures/stats
+router.get("/stats", async (req, res) => {
+  try {
+    const stats = await getFacturesStats();
+
+    res.status(200).json(stats);
+  } catch (error) {
+    res.status(500).json({
+      message: "Erreur lors de la récupération des statistiques",
+      error,
+    });
+  }
+});
+
+
+
+// GET /api/factures/revenue
+router.get('/revenue', async (req, res) => {
+  try {
+    const period = req.query.period === '12months' ? '12months' : '6months';
+    const result = await getRevenueStats(period);
+    res.json(result.data);
+  } catch (err) {
+    console.error('❌ Error in /stats/revenue route:', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération des statistiques.' });
+  }
+});
+
 
 
 // GET /api/factures/:id
@@ -116,5 +148,8 @@ router.delete("/:id", async (req, res) => {
     });
   }
 });
+
+
+
 
 export default router;

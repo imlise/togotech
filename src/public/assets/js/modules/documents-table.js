@@ -136,7 +136,7 @@ window.DocumentsTable = (function () {
         </td>
         <td class="td-mono"><a href="document.html?id=${doc.id}" style="color:var(--tt-navy-900);font-weight:600">${doc.numero}</a></td>
         <td><span class="badge badge--${doc.type}">${typeLabel(doc.type)}</span></td>
-        <td >${doc.client}</td>
+        <td class="truncate" style="white-space:normal max-width:160px">${doc.client}</td>
         <td class="text-secondary truncate" style="max-width:180px">${doc.objet}</td>
         <td class="td-mono">${TT.formatCurrency(doc.montant, doc.devise || 'FCFA')}</td>
         <td class="text-secondary">${TT.formatDate(doc.date)}</td>
