@@ -97,7 +97,7 @@ export async function deleteProduit(id: number) {
 
     await db.delete(produitsTable).where(eq(produitsTable.id, id));
     // image
-    await supprimerImage(produit!.image);
+
 
     
     console.log('✅ Produit deleted!');

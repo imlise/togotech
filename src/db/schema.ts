@@ -1,10 +1,12 @@
-import { integer,int,real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { integer,int,real, sqliteTable, text, check } from "drizzle-orm/sqlite-core";
 
 
 
 export const facturesTable = sqliteTable("factures", {
 	id: int().primaryKey({ autoIncrement: true }),
 	reference: text().notNull(),
+	objet:text().notNull(),
 	totalHt: real("total_ht").notNull(),
 	tva: integer().default(18).notNull(),
 	totalTtc: real("total_ttc").notNull(),
@@ -48,6 +50,14 @@ export const ligneProduitsTable = sqliteTable("ligne_produit",{
 	id: integer().primaryKey({autoIncrement:true}),
 	factureId: integer("facture_id").references(() => facturesTable.id),
 	produitId: integer("produit_id").references(() => produitsTable.id),
-	nombre: integer().notNull()
-})
+	nombre: integer().notNull(),
+	 reduction: integer("reduction").default(0)
+  },
+  (table) => ({
+    reductionDigits: check(
+      "reduction_digits",
+      sql`${table.reduction} >= 0 AND ${table.reduction} <= 100`
+    )
+  })
+)
 
