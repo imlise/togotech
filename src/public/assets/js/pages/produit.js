@@ -361,7 +361,7 @@ function openProduitModal(produit = null) {
 
                 src="${
                     produit
-                        ? 'http://localhost:3000/assets/' + produit.image
+                        ? API_image + produit.image
                         : ''
                 }"
 

@@ -1,7 +1,7 @@
 import { db } from '../db/db';
 import { produitsTable } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { supprimerImage } from '../utils/images';
+
 
 
 export async function createProduit(produit: typeof produitsTable.$inferInsert) {

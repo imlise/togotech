@@ -52,8 +52,22 @@ router.get("/:id", async (req, res) => {
 
 
 // UPDATE
+
 router.put("/:id", upload.single("image"), async (req, res) => {
   try {
+    const id = Number(req.params.id);
+
+    // 1. récupérer produit actuel
+    const produit = await db
+      .select()
+      .from(produitsTable)
+      .where(eq(produitsTable.id, id))
+      .get();
+
+    if (!produit) {
+      return res.status(404).json({ error: "Produit introuvable" });
+    }
+
     const { nom, description, prixUnitaire } = req.body;
 
     const updateData: Partial<InferInsertModel<typeof produitsTable>> = {
@@ -62,18 +76,37 @@ router.put("/:id", upload.single("image"), async (req, res) => {
   prixUnitaire: Number(prixUnitaire)
 };
 
+    // 2. si nouvelle image
     if (req.file) {
+
+      // supprimer ancienne image
+      if (produit.image) {
+        const oldPath = path.join(
+          process.cwd(),
+          "uploads",
+          path.basename(produit.image)
+        );
+
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+
+      // ajouter nouvelle image
       updateData.image = req.file.filename;
     }
 
-    const result = await db
+    // 3. update DB
+    const updated = await db
       .update(produitsTable)
       .set(updateData)
-      .where(eq(produitsTable.id, Number(req.params.id)))
-      .returning();
+      .where(eq(produitsTable.id, id))
+      .returning()
+      .get();
 
-    res.json(result[0]);
-  }  catch (err) {
+    res.json(updated);
+
+  } catch (err) {
   if (err instanceof Error) {
     res.status(500).json({ error: err.message });
   } else {
@@ -81,14 +114,47 @@ router.put("/:id", upload.single("image"), async (req, res) => {
   }}
 });
 
-
 // DELETE
-router.delete("/:id", async (req, res) => {
-  await db
-    .delete(produitsTable)
-    .where(eq(produitsTable.id, Number(req.params.id)));
+import fs from "fs";
+import path from "path";
 
-  res.json({ success: true });
+router.delete("/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    // 1. récupérer le produit
+    const produit = await db
+      .select()
+      .from(produitsTable)
+      .where(eq(produitsTable.id, id))
+      .get();
+
+    if (!produit) {
+      return res.status(404).json({ error: "Produit introuvable" });
+    }
+
+    // 2. supprimer l'image si elle existe
+    if (produit.image) {
+      const imagePath = path.join(process.cwd(), "uploads", produit.image);
+
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    // 3. supprimer en base
+    await db
+      .delete(produitsTable)
+      .where(eq(produitsTable.id, id));
+
+    res.json({ success: true });
+
+  }  catch (err) {
+  if (err instanceof Error) {
+    res.status(500).json({ error: err.message });
+  } else {
+    res.status(500).json({ error: 'Une erreur inconnue est survenue' });
+  }}
 });
 
 export default router;

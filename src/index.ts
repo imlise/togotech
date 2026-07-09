@@ -20,7 +20,9 @@ const assetsPath = path.join(__dirname, "..", "uploads"); // Construit le chemin
 app.use("/uploads", express.static(assetsPath));
 
 // fichiers statiques
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public"), {
+  extensions: ["html"]
+}));
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
