@@ -21,7 +21,8 @@ export const facturesTable = sqliteTable("factures", {
 export const clientsTable = sqliteTable("clients",{
 	id : int().primaryKey({autoIncrement:true}),
 	nom: text().notNull().unique(),
-	email:text().notNull().unique(),
+	email:text().unique(),
+	phone:text(),
 
 })
 

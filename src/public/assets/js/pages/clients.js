@@ -1,5 +1,7 @@
 'use strict';
 
+const API = 'http://localhost:3000/api/clients';
+
 document.addEventListener('DOMContentLoaded', () => {
   TTLayout.initShell({ page: 'clients', title: 'Clients' });
   document.getElementById('app-header').innerHTML = TTLayout.renderHeader({
@@ -8,18 +10,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderClients();
   document.getElementById('clientSearch')?.addEventListener('input', TT.debounce(e => renderClients(e.target.value.trim()), 200));
-  document.getElementById('addClientBtn')?.addEventListener('click', openClientModal);
+  document.getElementById('addClientBtn')?.addEventListener('click', () => openClientModal());
 });
 
-function renderClients(query = '') {
-  let clients = TT.getClients();
-  if (query) {
-    const q = query.toLowerCase();
-    clients = clients.filter(c => (c.name + c.email + c.phone).toLowerCase().includes(q));
-  }
+// --- Appels API ---
 
+async function fetchClients() {
+  const response = await fetch(API);
+  if (!response.ok) throw new Error('Erreur lors du chargement des clients.');
+  return response.json();
+}
+
+async function fetchClientStats(id) {
+  const response = await fetch(`${API}/${id}/stats`);
+  if (!response.ok) throw new Error(`Erreur lors du chargement des stats du client ${id}.`);
+  return response.json(); // { totalFactures, totalMontant }
+}
+
+async function createClient(data) {
+  const response = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Erreur lors de la création du client.');
+  return response.json();
+}
+
+async function updateClient(id, data) {
+  const response = await fetch(`${API}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Erreur lors de la modification du client.');
+  return response.json();
+}
+
+async function deleteClient(id) {
+  const response = await fetch(`${API}/${id}`, { method: 'DELETE' });
+  if (!response.ok) throw new Error('Erreur lors de la suppression du client.');
+}
+
+// --- Rendu ---
+
+let currentClients = []; // cache local pour édition/suppression sans refetch
+
+async function renderClients(query = '') {
   const grid = document.getElementById('clientsGrid');
   const empty = document.getElementById('clientsEmpty');
+
+  grid.innerHTML = '<div class="clients-loading">Chargement…</div>';
+  empty.hidden = true;
+
+  let clients;
+  try {
+    clients = await fetchClients();
+  } catch (err) {
+    console.error(err);
+    grid.innerHTML = '';
+    Toast.error('Impossible de charger les clients.');
+    return;
+  }
+
+  if (query) {
+    const q = query.toLowerCase();
+    clients = clients.filter(c => (c.nom + (c.email || '') + (c.phone || '')).toLowerCase().includes(q));
+  }
+
+  currentClients = clients;
 
   if (!clients.length) {
     grid.innerHTML = '';
@@ -28,14 +87,23 @@ function renderClients(query = '') {
   }
   empty.hidden = true;
 
-  const docs = TT.getDocs();
-  grid.innerHTML = clients.map(c => {
-    const clientDocs = docs.filter(d => d.client === c.name);
-    const total = clientDocs.reduce((s, d) => s + d.montant, 0);
+  // Récupère les stats de chaque client en parallèle
+  let statsList;
+  try {
+    statsList = await Promise.all(
+      clients.map(c => fetchClientStats(c.id).catch(() => ({ totalFactures: 0, totalMontant: 0 })))
+    );
+  } catch (err) {
+    console.error(err);
+    statsList = clients.map(() => ({ totalFactures: 0, totalMontant: 0 }));
+  }
+
+  grid.innerHTML = clients.map((c, i) => {
+    const { totalFactures, totalMontant } = statsList[i];
     return `
       <div class="card client-card">
         <div class="client-card__head">
-          <div class="avatar avatar--md avatar--navy">${c.name.charAt(0)}</div>
+          <div class="avatar avatar--md avatar--navy">${c.nom.charAt(0)}</div>
           <div class="dropdown">
             <button class="btn btn--ghost btn--icon btn--sm dropdown__trigger" aria-label="Actions">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="3" r="1" fill="currentColor"/><circle cx="7" cy="7" r="1" fill="currentColor"/><circle cx="7" cy="11" r="1" fill="currentColor"/></svg>
@@ -46,33 +114,43 @@ function renderClients(query = '') {
             </div>
           </div>
         </div>
-        <div class="client-card__name">${c.name}</div>
+        <div class="client-card__name">${c.nom}</div>
         <div class="client-card__meta">
           ${c.email ? `<div class="client-card__meta-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>${c.email}</div>` : ''}
           ${c.phone ? `<div class="client-card__meta-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 2h2l1 3-1.5 1a7 7 0 0 0 3.5 3.5L9 8l3 1v2a1 1 0 0 1-1 1A9 9 0 0 1 2 3a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.2"/></svg>${c.phone}</div>` : ''}
         </div>
         <div class="client-card__stats">
-          <div><div class="client-card__stat-value">${clientDocs.length}</div><div class="client-card__stat-label">Documents</div></div>
-          <div><div class="client-card__stat-value text-mono" style="font-size:var(--text-sm)">${TT.formatNumber(total)}</div><div class="client-card__stat-label">FCFA total</div></div>
+          <div><div class="client-card__stat-value">${totalFactures}</div><div class="client-card__stat-label">Documents</div></div>
+          <div><div class="client-card__stat-value text-mono" style="font-size:var(--text-sm)">${TT.formatNumber(totalMontant)}</div><div class="client-card__stat-label">FCFA total</div></div>
         </div>
-        <a href="facture.html?client=${encodeURIComponent(c.name)}" class="btn btn--secondary btn--sm" style="width:100%;margin-top:var(--space-4)">Nouvelle facture</a>
+        <a href="facture.html?client=${c.id}" class="btn btn--secondary btn--sm" style="width:100%;margin-top:var(--space-4)">Nouvelle facture</a>
       </div>
     `;
   }).join('');
 
   initDropdowns();
+
   grid.querySelectorAll('[data-delete]').forEach(btn => {
     btn.addEventListener('click', () => {
-      TTComponents.confirm({ title: 'Supprimer le client', message: 'Cette action est irréversible.', danger: true }).then(ok => {
+      TTComponents.confirm({ title: 'Supprimer le client', message: 'Cette action est irréversible.', danger: true }).then(async ok => {
         if (!ok) return;
-        TT.saveClients(TT.getClients().filter(c => c.id !== btn.dataset.delete));
-        renderClients(query);
-        Toast.success('Client supprimé.');
+        try {
+          await deleteClient(btn.dataset.delete);
+          renderClients(query);
+          Toast.success('Client supprimé.');
+        } catch (err) {
+          console.error(err);
+          Toast.error('Impossible de supprimer le client.');
+        }
       });
     });
   });
+
   grid.querySelectorAll('[data-edit]').forEach(btn => {
-    btn.addEventListener('click', () => openClientModal(TT.getClients().find(c => c.id === btn.dataset.edit)));
+    btn.addEventListener('click', () => {
+      const client = currentClients.find(c => String(c.id) === btn.dataset.edit);
+      openClientModal(client);
+    });
   });
 }
 
@@ -92,10 +170,9 @@ function openClientModal(client = null) {
   TTComponents.openModal({
     title: client ? 'Modifier le client' : 'Nouveau client',
     body: `
-      <div class="field"><label class="field__label">Nom / Société</label><input class="field__input" id="mName" value="${client?.name || ''}" /></div>
+      <div class="field"><label class="field__label">Nom / Société</label><input class="field__input" id="mName" value="${client?.nom || ''}" /></div>
       <div class="field"><label class="field__label">E-mail</label><input class="field__input" id="mEmail" type="email" value="${client?.email || ''}" /></div>
       <div class="field"><label class="field__label">Téléphone</label><input class="field__input" id="mPhone" value="${client?.phone || ''}" /></div>
-      <div class="field"><label class="field__label">Adresse</label><input class="field__input" id="mAddress" value="${client?.address || ''}" /></div>
     `,
     footer: `
       <button class="btn btn--secondary" id="mCancel">Annuler</button>
@@ -104,22 +181,27 @@ function openClientModal(client = null) {
   });
 
   document.getElementById('mCancel').addEventListener('click', TTComponents.closeModal);
-  document.getElementById('mSave').addEventListener('click', () => {
+  document.getElementById('mSave').addEventListener('click', async () => {
     const data = {
-      id: client?.id || TT.genId(),
-      name: document.getElementById('mName').value.trim(),
+      nom: document.getElementById('mName').value.trim(),
       email: document.getElementById('mEmail').value.trim(),
       phone: document.getElementById('mPhone').value.trim(),
-      address: document.getElementById('mAddress').value.trim(),
-      createdAt: client?.createdAt || TT.todayISO(),
     };
-    if (!data.name) { Toast.error('Le nom est requis.'); return; }
-    let clients = TT.getClients();
-    if (client) clients = clients.map(c => c.id === client.id ? data : c);
-    else clients.unshift(data);
-    TT.saveClients(clients);
-    TTComponents.closeModal();
-    renderClients();
-    Toast.success(client ? 'Client modifié.' : 'Client ajouté.');
+    if (!data.nom) { Toast.error('Le nom est requis.'); return; }
+
+    try {
+      if (client) {
+        await updateClient(client.id, data);
+        Toast.success('Client modifié.');
+      } else {
+        await createClient(data);
+        Toast.success('Client ajouté.');
+      }
+      TTComponents.closeModal();
+      renderClients();
+    } catch (err) {
+      console.error(err);
+      Toast.error("Erreur lors de l'enregistrement du client.");
+    }
   });
 }

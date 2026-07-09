@@ -9,6 +9,7 @@ import {
   getClientByEmail,
   updateClient,
   deleteClient,
+  getClientStats,
 } from "../services/clients";
 
 const router = express.Router();
@@ -158,6 +159,24 @@ router.delete("/:id", async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Erreur lors de la suppression du client.",
+      error,
+    });
+  }
+});
+
+
+
+// GET /api/clients/:id/stats
+router.get("/:id/stats", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    const stats = await getClientStats(id);
+
+    res.status(200).json(stats);
+  } catch (error) {
+    res.status(500).json({
+      message: "Erreur lors de la récupération des stats du client",
       error,
     });
   }

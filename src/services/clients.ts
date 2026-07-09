@@ -1,6 +1,6 @@
 import { db } from '../db/db';
-import { clientsTable } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { clientsTable, facturesTable } from '../db/schema';
+import { and, count, eq, sum } from 'drizzle-orm';
 
 // 📌 CREATE - Ajouter un client
 export async function createClient(client: typeof clientsTable.$inferInsert) {
@@ -118,6 +118,33 @@ export async function deleteClient(id: number) {
     return { success: true, message: 'Client deleted successfully' };
   } catch (error) {
     console.error('❌ Error deleting client:', error);
+    throw error;
+  }
+}
+
+// Stats des clients
+
+export async function getClientStats(clientId: number) {
+  try {
+    const result = await db
+      .select({
+        totalFactures: count(),
+        totalMontant: sum(facturesTable.totalTtc)
+      })
+      .from(facturesTable)
+      .where(
+        and(
+          eq(facturesTable.client, clientId),
+          eq(facturesTable.isProforma, false)
+        )
+      );
+
+    return {
+      totalFactures: result[0]?.totalFactures || 0,
+      totalMontant: Number(result[0]?.totalMontant || 0),
+    };
+  } catch (error) {
+    console.error("❌ Error fetching client stats:", error);
     throw error;
   }
 }
