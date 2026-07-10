@@ -25,7 +25,6 @@ export const clientsTable = sqliteTable("clients",{
 	nom: text().notNull().unique(),
 	email:text().unique(),
 	phone:text(),
-
 });
 
 export const produitsTable = sqliteTable("produits", {

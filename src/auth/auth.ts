@@ -29,7 +29,7 @@ export async function login(
     );
 
     if (!motDePasseValide) {
-      throw new Error("Nom d'utilisateur ou mot de passe incorrect.");
+      throw new Error("Identifiants incorrect.");
     }
 
     // Ouvre la session

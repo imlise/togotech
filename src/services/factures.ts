@@ -1,13 +1,48 @@
 import { db } from '../db/db';
 import { facturesTable } from '../db/schema';
-import { count, eq, sql } from 'drizzle-orm';
+import { count, desc, eq, sql, like } from 'drizzle-orm';
+
+
+
+export async function generateReference(isProforma: boolean) {
+  const year = new Date().getFullYear();
+  const prefix = isProforma ? "PRO" : "FAC";
+
+  const last = await db
+    .select({
+      reference: facturesTable.reference,
+    })
+    .from(facturesTable)
+    .where(
+      like(facturesTable.reference, `${prefix}-${year}-%`)
+    )
+    .orderBy(desc(facturesTable.id))
+    .limit(1);
+
+  let nextNumber = 1;
+
+  if (last.length > 0) {
+    const lastRef = last[0].reference;
+    const lastNumber = parseInt(lastRef.split("-")[2], 10);
+    nextNumber = lastNumber + 1;
+  }
+
+  const formattedNumber = String(nextNumber).padStart(3, "0");
+
+  return `${prefix}-${year}-${formattedNumber}`;
+}
+
 
 
 export async function createFacture(facture: typeof facturesTable.$inferInsert) {
   try {
-    await db.insert(facturesTable).values(facture);
-    console.log('✅ Nouveau Facture!');
-    return { success: true, message: 'Facture created successfully' };
+   const reference = await generateReference(facture.isProforma);
+
+    const newFacture = await db.insert(facturesTable).values({
+      ...facture,
+      reference,
+    }).returning();
+    return { success: true, message: 'Facture created successfully',"nouvelle facture": newFacture[0] };
   } catch (error) {
     console.error('❌ Error creating facture:', error);
     throw error;
