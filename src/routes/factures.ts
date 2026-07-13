@@ -9,6 +9,7 @@ import {
   deleteFacture,
   getFacturesStats,
   getRevenueStats,
+  getLigneProduitsByFactureId,
 } from "../services/factures";
 
 const router = express.Router();
@@ -86,11 +87,35 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+router.get("/:id/lignes", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+      return res.status(400).json({
+        message: "ID invalide",
+      });
+    }
+
+    const lignes = await getLigneProduitsByFactureId(id);
+
+    return res.status(200).json(lignes);
+
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Erreur lors de la récupération des lignes produits",
+      error: error.message,
+    });
+  }
+});
+
 
 // POST /api/factures
 function toTimestamp(dateString?: string) {
-  return dateString ? new Date(dateString).getTime() : null;
-}
+  // return dateString ? new Date(dateString).getTime() : null;
+  return dateString ? new Date(dateString) : null;
+} 
 router.post("/", async (req, res) => {
   try {
     const body = req.body;
@@ -104,10 +129,14 @@ router.post("/", async (req, res) => {
     const result = await createFacture(facture);
 
     res.status(201).json(result);
-  } catch (error) {
+  }  catch (error) {
+    console.error(error);
+
     res.status(500).json({
       message: "Erreur lors de la création de la facture.",
-      error,
+      error: error instanceof Error 
+        ? error.message 
+        : error
     });
   }
 });

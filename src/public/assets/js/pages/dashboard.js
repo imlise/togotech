@@ -119,6 +119,12 @@ async function renderStats() {
 
   const cards = [
     {
+      label: 'Total documents', value: stats.total, trend: 'Stable', trendType: 'flat', theme: 'green', delay: '.12s', progress: 90,
+      icon: '<rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>',
+      deco: '<svg viewBox="0 0 120 120" fill="none"><rect x="15" y="15" width="40" height="40" rx="6" stroke="currentColor" stroke-width="6"/><rect x="65" y="15" width="40" height="40" rx="6" stroke="currentColor" stroke-width="6"/><rect x="15" y="65" width="40" height="40" rx="6" stroke="currentColor" stroke-width="6"/><rect x="65" y="65" width="40" height="40" rx="6" stroke="currentColor" stroke-width="6"/></svg>',
+    },
+    
+    {
       label: 'Factures émises', value: stats.factures, trend: '+12%', trendType: 'up', theme: 'blue', delay: '.04s', progress: 78,
       icon: '<path d="M3 2h10a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.3"/><path d="M5 5.5h6M5 8h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
       deco: '<svg viewBox="0 0 120 120" fill="none"><rect x="20" y="15" width="70" height="90" rx="8" stroke="currentColor" stroke-width="6"/><path d="M35 45h50M35 60h40M35 75h30" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></svg>',
@@ -127,11 +133,6 @@ async function renderStats() {
       label: 'Proformas', value: stats.proformas, trend: '+8%', trendType: 'up', theme: 'coral', delay: '.08s', progress: 62,
       icon: '<path d="M3 2h10a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 8l2 2 3-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>',
       deco: '<svg viewBox="0 0 120 120" fill="none"><circle cx="60" cy="60" r="45" stroke="currentColor" stroke-width="6"/><path d="M40 60l15 15 30-30" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    },
-    {
-      label: 'Total documents', value: stats.total, trend: 'Stable', trendType: 'flat', theme: 'green', delay: '.12s', progress: 90,
-      icon: '<rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>',
-      deco: '<svg viewBox="0 0 120 120" fill="none"><rect x="15" y="15" width="40" height="40" rx="6" stroke="currentColor" stroke-width="6"/><rect x="65" y="15" width="40" height="40" rx="6" stroke="currentColor" stroke-width="6"/><rect x="15" y="65" width="40" height="40" rx="6" stroke="currentColor" stroke-width="6"/><rect x="65" y="65" width="40" height="40" rx="6" stroke="currentColor" stroke-width="6"/></svg>',
     },
     {
       label: 'CA du mois (FCFA)', value: stats.revenue, trend: '+24%', trendType: 'up', theme: 'amber', delay: '.16s', currency: true, progress: 55,

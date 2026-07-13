@@ -1,6 +1,6 @@
 import { db } from '../db/db';
-import { facturesTable } from '../db/schema';
-import { count, desc, eq, sql, like } from 'drizzle-orm';
+import { facturesTable, ligneProduitsTable, produitsTable } from '../db/schema';
+import { count, desc, eq, sql, like, inArray } from 'drizzle-orm';
 
 
 
@@ -33,20 +33,57 @@ export async function generateReference(isProforma: boolean) {
 }
 
 
+type CreateFactureInput = {
+  facture: typeof facturesTable.$inferInsert;
+  lignes: {
+    produitId: number;
+    quantite: number;
+    reduction?: number;
+  }[];
+};
 
-export async function createFacture(facture: typeof facturesTable.$inferInsert) {
-  try {
-   const reference = await generateReference(facture.isProforma);
+export async function createFacture(data :CreateFactureInput) {
+  const { facture, lignes } = data;
 
-    const newFacture = await db.insert(facturesTable).values({
-      ...facture,
-      reference,
-    }).returning();
-    return { success: true, message: 'Facture created successfully',"nouvelle facture": newFacture[0] };
-  } catch (error) {
-    console.error('❌ Error creating facture:', error);
-    throw error;
-  }
+  return await db.transaction(async (tx) => {
+
+    const reference = await generateReference(facture.isProforma);
+
+    const insertedFacture = await tx
+      .insert(facturesTable)
+      .values({ ...facture, reference })
+      .returning();
+
+    const factureId = insertedFacture[0].id;
+
+    // récupérer produits
+    const produits = await tx
+      .select()
+      .from(produitsTable)
+      .where(inArray(produitsTable.id, lignes.map(l => l.produitId)));
+
+    const lignesToInsert = lignes.map(l => {
+      const p = produits.find(x => x.id === l.produitId);
+
+      return {
+        factureId,
+        produitId: p!.id,
+        nom: p!.nom,
+        description: p!.description,
+        image: p!.image,
+        prixUnitaire: p!.prixUnitaire,
+        quantite: l.quantite,
+        reduction: l.reduction || 0,
+      };
+    });
+
+    await tx.insert(ligneProduitsTable).values(lignesToInsert);
+
+    return {
+      success: true,
+      facture: insertedFacture[0],
+    };
+  });
 }
 
 
@@ -185,4 +222,20 @@ export async function getRevenueStats(period: '6months' | '12months' = '6months'
     console.error('❌ Error fetching revenue stats:', error);
     throw error;
   }
+}
+
+
+export async function getLigneProduitsByFactureId(
+  factureId: number
+) {
+  if (!factureId || isNaN(factureId)) {
+    throw new Error("ID facture invalide");
+  }
+
+  const lignes = await db
+    .select()
+    .from(ligneProduitsTable)
+    .where(eq(ligneProduitsTable.factureId, factureId));
+
+  return lignes;
 }

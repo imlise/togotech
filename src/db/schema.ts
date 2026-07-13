@@ -10,13 +10,21 @@ export const facturesTable = sqliteTable("factures", {
 	totalHt: real("total_ht").notNull(),
 	tva: integer().default(18).notNull(),
 	totalTtc: real("total_ttc").notNull(),
-	dateEcheance: integer("date_echeance",{ mode: 'timestamp' }),
+	// dateEcheance: integer("date_echeance",{ mode: 'timestamp' }),
 	dateDePaiement: integer("date_de_paiement",{ mode: 'timestamp' }),
 	isProforma: integer("is_proforma",{mode : 'boolean'}).notNull(),
-	validite: integer().notNull(),
-	dateDeLivraison: integer("date_de_livraison",{ mode : 'timestamp' }),
 	createdAt: integer("created_at",{ mode : 'timestamp'}).notNull().default(sql`(current_timestamp)`),
-	garantie: text().notNull(),
+
+	remiseGlobale: integer("remise_globale"),
+
+	//  champ condition
+	
+	delaiDeLivraison: text("delai_de_livraison"),
+	validite: text(),
+	garantie: text(),
+	conditonDePaienment: text("condition_de _paiement").default("60% à l'accord et 40% à la livraison"),
+
+
 	client: integer("client_id").references(() => clientsTable.id),
 },);
 
@@ -45,18 +53,41 @@ export const utilisateursTable = sqliteTable("utilisateurs", {
 	actif: integer({mode: "boolean",}).notNull().default(true),
 });
 
-export const ligneProduitsTable = sqliteTable("ligne_produit",{
-	id: integer().primaryKey({autoIncrement:true}),
-	factureId: integer("facture_id").references(() => facturesTable.id),
-	produitId: integer("produit_id").references(() => produitsTable.id),
-	nombre: integer().notNull(),
-	reduction: integer("reduction").default(0),
-  },
-  (table) => ({
-    reductionDigits: check(
-      "reduction_digits",
-      sql`${table.reduction} >= 0 AND ${table.reduction} <= 100`
-    )
-  })
-)
+// export const ligneProduitsTable = sqliteTable("ligne_produit",{
+// 	id: integer().primaryKey({autoIncrement:true}),
+// 	factureId: integer("facture_id").references(() => facturesTable.id),
+// 	produitId: integer("produit_id").references(() => produitsTable.id),
+// 	nombre: integer().notNull(),
+// 	reduction: integer("reduction").default(0),
+//   },
+//   (table) => ({
+//     reductionDigits: check(
+//       "reduction_digits",
+//       sql`${table.reduction} >= 0 AND ${table.reduction} <= 100`
+//     )
+//   })
+// )
+
+
+export const ligneProduitsTable = sqliteTable("ligne_produit", {
+  id: integer().primaryKey({ autoIncrement: true }),
+
+  factureId: integer("facture_id")
+    .references(() => facturesTable.id, {
+		onDelete: "cascade",
+	}),
+
+  produitId: integer("produit_id")
+    .references(() => produitsTable.id),
+
+  nom: text().notNull(),
+  description: text().notNull(),
+  image: text(),
+
+  prixUnitaire: real("prix_unitaire").notNull(),
+
+  quantite: integer().notNull(),
+
+//   reduction: real().default(0), // en %
+});
 
