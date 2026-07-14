@@ -118,7 +118,15 @@ async function renderClients(query = '') {
         <div class="client-card__meta">
           ${c.email ? `<div class="client-card__meta-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>${c.email}</div>` : ''}
           ${c.phone ? `<div class="client-card__meta-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 2h2l1 3-1.5 1a7 7 0 0 0 3.5 3.5L9 8l3 1v2a1 1 0 0 1-1 1A9 9 0 0 1 2 3a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.2"/></svg>${c.phone}</div>` : ''}
+           ${c.adresse ? `<div class="client-card__meta-item">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+  <path d="M7 1C4.79 1 3 2.79 3 5c0 3.25 4 8 4 8s4-4.75 4-8c0-2.21-1.79-4-4-4Z" stroke="currentColor" stroke-width="1.2"/>
+  <circle cx="7" cy="5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+</svg>
+            ${c.adresse}</div>` : ''}
         </div>
+       
+        
         <div class="client-card__stats">
           <div><div class="client-card__stat-value">${totalFactures}</div><div class="client-card__stat-label">Documents</div></div>
           <div><div class="client-card__stat-value text-mono" style="font-size:var(--text-sm)">${TT.formatNumber(totalMontant)}</div><div class="client-card__stat-label">FCFA total</div></div>
@@ -173,6 +181,7 @@ function openClientModal(client = null) {
       <div class="field"><label class="field__label">Nom / Société</label><input class="field__input" id="mName" value="${client?.nom || ''}" /></div>
       <div class="field"><label class="field__label">E-mail</label><input class="field__input" id="mEmail" type="email" value="${client?.email || ''}" /></div>
       <div class="field"><label class="field__label">Téléphone</label><input class="field__input" id="mPhone" value="${client?.phone || ''}" /></div>
+      <div class="field"><label class="field__label">Adresse</label><input class="field__input" id="mAdresse" value="${client?.adresse || ''}" /></div>
     `,
     footer: `
       <button class="btn btn--secondary" id="mCancel">Annuler</button>
@@ -186,6 +195,7 @@ function openClientModal(client = null) {
       nom: document.getElementById('mName').value.trim(),
       email: document.getElementById('mEmail').value.trim(),
       phone: document.getElementById('mPhone').value.trim(),
+      adresse: document.getElementById('mAdresse').value.trim(),
     };
     if (!data.nom) { Toast.error('Le nom est requis.'); return; }
 

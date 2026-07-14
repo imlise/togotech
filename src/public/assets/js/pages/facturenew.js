@@ -58,21 +58,10 @@ const InvoiceEditor = (function () {
     $('fTva').value = settings.tva || 18;
   }
 
-async function populateClients() {
-
-  const dl = $('clientList');
-
-  try {
-    const clients = await AA.getClients();
-    console.log(clients);
-    dl.innerHTML = clients
-      .map(c => `<option value="${c.nom}">`)
-      .join('');
-    console.log(dl);
-  } catch (err) {
-    console.error('Erreur chargement clients', err);
+  function populateClients() {
+    const dl = $('clientList');
+    dl.innerHTML = TT.getClients().map(c => `<option value="${c.name}">`).join('');
   }
-}
 
   function bindEvents() {
     document.querySelectorAll('.segmented__btn').forEach(btn => {
@@ -116,11 +105,11 @@ async function populateClients() {
     }
   }
 
-  async function setType(type) {
+  function setType(type) {
     docType = type;
     document.querySelectorAll('.segmented__btn').forEach(b => b.classList.toggle('is-active', b.dataset.type === type));
     $('editorTitle').textContent = type === 'proforma' ? 'Nouvelle proforma' : 'Nouvelle facture';
-    if (!editId) $('fNumero').value = await AA.nextNumero(type);
+    if (!editId) $('fNumero').value = TT.nextNumero(type);
     const label = type === 'proforma' ? 'Facture Proforma' : 'Facture';
     if ($('pdfDocTypeLabel')) $('pdfDocTypeLabel').textContent = label;
     syncAll();
@@ -133,35 +122,17 @@ async function populateClients() {
       .replace(/60%.*?livraison/gi, m => `<span class="hl-red">${m}</span>`);
   }
 
-async function autofillClient() {
-
-  const name = $('fClient').value;
-
-  try {
-
-    const clients = await AA.getClients();
-    console.log(clients)
-    const client = clients.find(c => c.nom === name);
-
+  function autofillClient() {
+    const name = $('fClient').value;
+    const client = TT.getClients().find(c => c.name === name);
     if (client) {
-
       $('fEmail').value = client.email || '';
-
       $('fTelephone').value = client.phone || '';
-
-      $('fAdresse').value = client.adresse || '';
-
+      $('fAdresse').value = client.address || '';
       syncAll();
-
+      
     }
-
-  } catch (error) {
-
-    console.error('Erreur récupération clients:', error);
-
   }
-
-}
 
   function autoGrow(el) {
     el.style.height = 'auto';
