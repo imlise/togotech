@@ -10,6 +10,7 @@ import {
   getFacturesStats,
   getRevenueStats,
   getLigneProduitsByFactureId,
+  getNextFactureReference,
 } from "../services/factures";
 
 const router = express.Router();
@@ -56,6 +57,27 @@ router.get('/revenue', async (req, res) => {
     res.status(500).json({ error: 'Erreur lors de la récupération des statistiques.' });
   }
 });
+
+
+
+// GET /api/factures/next-reference?isProforma=true
+router.get("/next-reference", async (req, res) => {
+  try {
+    const isProforma = req.query.isProforma === "true";
+
+    const reference = await getNextFactureReference(isProforma);
+
+    return res.status(200).json({ reference });
+
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Erreur lors de la génération de la référence",
+      error: error.message,
+    });
+  }
+});
+
 
 
 
@@ -186,6 +208,8 @@ router.delete("/:id", async (req, res) => {
     });
   }
 });
+
+
 
 
 

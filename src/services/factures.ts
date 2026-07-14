@@ -239,3 +239,39 @@ export async function getLigneProduitsByFactureId(
 
   return lignes;
 }
+
+
+
+export async function getNextFactureReference(
+  isProforma: boolean
+): Promise<string> {
+  const year = new Date().getFullYear();
+
+  const prefix = isProforma ? "PRO" : "FAC";
+  const pattern = `${prefix}-${year}-%`;
+
+  // récupérer la dernière facture correspondante
+  const last = await db
+    .select({ reference: facturesTable.reference })
+    .from(facturesTable)
+    .where(like(facturesTable.reference, pattern))
+    .orderBy(desc(facturesTable.id))
+    .limit(1);
+
+  let nextNumber = 1;
+
+  if (last.length > 0) {
+    const lastRef = last[0].reference; // ex: FAC-2026-004
+
+    const parts = lastRef.split("-");
+    const lastNum = parseInt(parts[2], 10);
+
+    if (!isNaN(lastNum)) {
+      nextNumber = lastNum + 1;
+    }
+  }
+
+  const formattedNumber = String(nextNumber).padStart(3, "0");
+
+  return `${prefix}-${year}-${formattedNumber}`;
+}
