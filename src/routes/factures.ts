@@ -143,9 +143,9 @@ router.post("/", async (req, res) => {
     const body = req.body;
     const facture = {
       ...body,
-      dateEcheance: toTimestamp(body.dateEcheance),
-      dateDePaiement: toTimestamp(body.dateDePaiement),
-      dateDeLivraison: toTimestamp(body.dateDeLivraison),
+      // dateEcheance: toTimestamp(body.dateEcheance),
+      // dateDePaiement: toTimestamp(body.dateDePaiement),
+      // dateDeLivraison: toTimestamp(body.dateDeLivraison),
     };
 
     const result = await createFacture(facture);

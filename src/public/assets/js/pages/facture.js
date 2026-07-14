@@ -172,6 +172,7 @@ async function autofillClient() {
     const id = TT.genId();
     lines.push({ id, ref: data.ref || '', desc: data.desc || '', qty: data.qty || 1, pu: data.pu || 0, remise: data.remise || 0, image: data.image || '' });
     renderLines();
+    console.log(lines);
   }
 
   function renderLines() {
@@ -289,6 +290,7 @@ async function autofillClient() {
       tva: parseFloat($('fTva').value) || 0,
       remise: parseFloat($('fRemise').value) || 0,
       conditions: $('fConditions').value,
+      totalHt:Math.round(totals.ht),
       montant: Math.round(totals.ttc),
       lines: TT.clone(lines),
       status: 'sent',
@@ -296,6 +298,74 @@ async function autofillClient() {
       createdAt: new Date().toISOString(),
     };
   }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  async function buildBackendPayload(formData) {
+    let clientId = null;
+    try {
+      const clients = await AA.getClients();
+      const selectedClient = clients.find(client => client.nom === formData.client);
+      clientId = selectedClient?.id ?? null;
+    } catch (error) {
+      console.error('Impossible de résoudre le client pour le backend:', error);
+    }
+
+    return {
+    facture: {
+      objet: formData.objet || null,
+
+      totalHt: Number(formData.totalHt) || 0,
+      totalTtc: Number(formData.montant) || 0,
+      tva: Number(formData.tva) || 18,
+
+      isProforma: docType === 'proforma',
+
+      client: clientId,
+      devise: formData.devise || 'XOF',
+
+      // 🔥 timestamps (important pour ton schema)
+      dateEcheance: formData.echeance
+        ? new Date(formData.echeance).getTime()
+        : null,
+
+      dateDePaiement: formData.date
+        ? new Date(formData.date).getTime()
+        : null,
+
+      remiseGlobale: Number(formData.remiseGlobale || 0),
+
+      conditon: formData.conditions || null,
+    },
+
+    lignes: lines.map(line => ({
+      nom: line.ref || line.desc || 'Produit',
+      description: line.desc || line.ref || 'Produit',
+      image: line.image || null,
+
+      prixUnitaire: Number(line.pu) || 0,
+      quantite: Number(line.qty) || 1,
+      reduction: Number(line.remise) || 0,
+    })),
+  };
+  }
+
+  async function postToBackend(formData) {
+    const payload = await buildBackendPayload(formData);
+    const response = await fetch('/api/factures', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.message || 'Erreur API facture');
+    }
+
+    return data;
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   function saveDocument(status) {
     if (!$('fClient').value || !$('fObjet').value) {
@@ -325,6 +395,16 @@ async function autofillClient() {
     TT.saveDocs(docs);
     TT.addNotification('create', `${docType === 'proforma' ? 'Proforma' : 'Facture'} ${data.numero} enregistrée.`);
     Toast.success('Document enregistré avec succès.');
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    if (status === 'sent') {
+      postToBackend(data).then(result => {
+        console.info('Facture envoyée au backend:', result);
+      }).catch(error => {
+        console.error('Erreur d’envoi parallèle vers le backend:', error);
+      });
+    }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     setTimeout(() => { window.location.href = `document.html?id=${data.id}`; }, 800);
   }
 

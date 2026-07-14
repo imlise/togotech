@@ -33,50 +33,50 @@ export async function generateReference(isProforma: boolean) {
 }
 
 
-type CreateFactureInput = {
-  facture: typeof facturesTable.$inferInsert;
-  lignes: {
-    produitId: number;
-    quantite: number;
-    reduction?: number;
-  }[];
-};
 
-export async function createFacture(data :CreateFactureInput) {
+
+export async function createFacture(data : any) {
   const { facture, lignes } = data;
 
   return await db.transaction(async (tx) => {
 
     const reference = await generateReference(facture.isProforma);
 
+    // 🔹 INSERT FACTURE
     const insertedFacture = await tx
       .insert(facturesTable)
-      .values({ ...facture, reference })
+      .values({
+        ...facture,
+        reference,
+      })
       .returning();
 
     const factureId = insertedFacture[0].id;
 
-    // récupérer produits
-    const produits = await tx
-      .select()
-      .from(produitsTable)
-      .where(inArray(produitsTable.id, lignes.map(l => l.produitId)));
+    // 🔹 PREPARE LIGNES
+    const lignesToInsert = lignes.map((l: { prixUnitaire: any; reduction: number; quantite: any; nom: any; description: any; image: any; }) => {
 
-    const lignesToInsert = lignes.map(l => {
-      const p = produits.find(x => x.id === l.produitId);
+      const prix = l.prixUnitaire;
+      const reduction = l.reduction || 0;
+      const quantite = l.quantite;
+
+      // 🔥 calcul montant
+      const montant =
+        quantite * prix * (1 - reduction / 100);
 
       return {
         factureId,
-        produitId: p!.id,
-        nom: p!.nom,
-        description: p!.description,
-        image: p!.image,
-        prixUnitaire: p!.prixUnitaire,
-        quantite: l.quantite,
-        reduction: l.reduction || 0,
+        nom: l.nom,
+        description: l.description,
+        image: l.image,
+        prixUnitaire: prix,
+        quantite,
+        reduction,
+        montant,
       };
     });
 
+    // 🔹 INSERT LIGNES
     await tx.insert(ligneProduitsTable).values(lignesToInsert);
 
     return {

@@ -1,9 +1,9 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "1ac439be-b5c2-44f8-81c9-e70413553e70",
+  "id": "65ef1fa7-b537-4e0f-92ad-f0af306fc475",
   "prevIds": [
-    "6bee5d72-c753-48b0-a005-e7c1292b3691"
+    "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
     {
@@ -63,6 +63,16 @@
       "default": null,
       "generated": null,
       "name": "phone",
+      "entityType": "columns",
+      "table": "clients"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "adresse",
       "entityType": "columns",
       "table": "clients"
     },
@@ -132,6 +142,26 @@
       "autoincrement": false,
       "default": null,
       "generated": null,
+      "name": "date_echeance",
+      "entityType": "columns",
+      "table": "factures"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "devise",
+      "entityType": "columns",
+      "table": "factures"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
       "name": "date_de_paiement",
       "entityType": "columns",
       "table": "factures"
@@ -172,37 +202,7 @@
       "autoincrement": false,
       "default": null,
       "generated": null,
-      "name": "delai_de_livraison",
-      "entityType": "columns",
-      "table": "factures"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "validite",
-      "entityType": "columns",
-      "table": "factures"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "garantie",
-      "entityType": "columns",
-      "table": "factures"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": "''",
-      "generated": null,
-      "name": "condition_de _paiement",
+      "name": "condition",
       "entityType": "columns",
       "table": "factures"
     },
@@ -233,16 +233,6 @@
       "default": null,
       "generated": null,
       "name": "facture_id",
-      "entityType": "columns",
-      "table": "ligne_produit"
-    },
-    {
-      "type": "integer",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "produit_id",
       "entityType": "columns",
       "table": "ligne_produit"
     },
@@ -293,6 +283,26 @@
       "default": null,
       "generated": null,
       "name": "quantite",
+      "entityType": "columns",
+      "table": "ligne_produit"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "reduction",
+      "entityType": "columns",
+      "table": "ligne_produit"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "montant",
       "entityType": "columns",
       "table": "ligne_produit"
     },
@@ -433,21 +443,6 @@
       "onDelete": "CASCADE",
       "nameExplicit": false,
       "name": "fk_ligne_produit_facture_id_factures_id_fk",
-      "entityType": "fks",
-      "table": "ligne_produit"
-    },
-    {
-      "columns": [
-        "produit_id"
-      ],
-      "tableTo": "produits",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "NO ACTION",
-      "nameExplicit": false,
-      "name": "fk_ligne_produit_produit_id_produits_id_fk",
       "entityType": "fks",
       "table": "ligne_produit"
     },
