@@ -131,7 +131,7 @@ async function renderClients(query = '') {
           <div><div class="client-card__stat-value">${totalFactures}</div><div class="client-card__stat-label">Documents</div></div>
           <div><div class="client-card__stat-value text-mono" style="font-size:var(--text-sm)">${TT.formatNumber(totalMontant)}</div><div class="client-card__stat-label">FCFA total</div></div>
         </div>
-        <a href="facture.html?client=${c.id}" class="btn btn--secondary btn--sm" style="width:100%;margin-top:var(--space-4)">Nouvelle facture</a>
+        <a href="facture.html?client=${c.nom}" class="btn btn--secondary btn--sm" style="width:100%;margin-top:var(--space-4)">Nouvelle facture</a>
       </div>
     `;
   }).join('');
