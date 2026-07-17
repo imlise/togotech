@@ -61,7 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="doc-meta-item"><span class="doc-meta-label">Client</span><span class="doc-meta-value">${doc.client}</span></div>
               <div class="doc-meta-item"><span class="doc-meta-label">Montant TTC</span><span class="doc-meta-value text-mono">${TT.formatCurrency(doc.montant, doc.devise)}</span></div>
               <div class="doc-meta-item"><span class="doc-meta-label">Date d'émission</span><span class="doc-meta-value">${TT.formatDate(doc.date)}</span></div>
-              <div class="doc-meta-item"><span class="doc-meta-label">Échéance</span><span class="doc-meta-value">${TT.formatDate(doc.echeance)}</span></div>
+              <div class="doc-meta-item"><span class="doc-meta-label">Dossier suivi par</span><span class="doc-meta-value">${doc.dossierSuivi || '—'}</span></div>
+              <div class="doc-meta-item"><span class="doc-meta-label">Contact</span><span class="doc-meta-value">${doc.contact || '—'}</span></div>
               <div class="doc-meta-item"><span class="doc-meta-label">TVA</span><span class="doc-meta-value">${doc.tva || 18}%</span></div>
             </div>
           </div>
@@ -89,7 +90,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // Imprime le DOM live (le même noeud #docPdfPage déjà affiché dans la
   // carte "Aperçu") via window.print(). Le CSS @media print masque le
   // reste de la page et neutralise le zoom (transform:scale) de la carte.
-  document.getElementById('printDoc')?.addEventListener('click', () => window.print());
+  //
+  // Filet de sécurité : la carte "Aperçu" (.card__body) a un fond bleu
+  // pâle (--color-bg-muted) et un overflow:auto à l'écran (zoom réduit à
+  // 65%). Le CSS @media print le repasse en transparent/visible, mais
+  // certains moteurs d'impression (notamment "Enregistrer en PDF" de
+  // Chrome) appliquent ça de façon peu fiable sur un conteneur qui était
+  // scrollable à l'écran, laissant un résidu bleuté sous le pied de page.
+  // On force donc aussi ce style en JS, le temps strict de l'impression.
+  let printCardBackup = null;
+  function prepareForPrint() {
+    const cardBody = document.querySelector('.doc-detail-grid .card__body');
+    printCardBackup = cardBody ? cardBody.getAttribute('style') : null;
+    if (cardBody) { cardBody.style.background = '#ffffff'; cardBody.style.padding = '0'; cardBody.style.overflow = 'visible'; }
+    // Cible prudente (265mm, pas 297mm) : voir le commentaire dans le
+    // bloc @media print de facture.css pour l'explication complète.
+    InvoiceTemplate.fitToPage(document.getElementById('docPdfPage'), 265);
+  }
+  function restoreAfterPrint() {
+    const cardBody = document.querySelector('.doc-detail-grid .card__body');
+    if (cardBody) { printCardBackup != null ? cardBody.setAttribute('style', printCardBackup) : cardBody.removeAttribute('style'); }
+    InvoiceTemplate.fitToPage(document.getElementById('docPdfPage')); // retour à la cible normale (297mm)
+  }
+  window.addEventListener('beforeprint', prepareForPrint);
+  window.addEventListener('afterprint', restoreAfterPrint);
+  document.getElementById('printDoc')?.addEventListener('click', () => printDocument(doc));
   document.getElementById('downloadPdfDoc')?.addEventListener('click', () => downloadPdf(doc));
 
   // .pdf-page est en position:absolute avec transform-origin:top left
@@ -103,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const page = document.getElementById('docPdfPage');
     const wrap = page?.closest('.preview-page-wrap');
     if (!page || !wrap) return;
+    InvoiceTemplate.fitToPage(page);
     const zoom = 0.65;
     wrap.style.width = (page.offsetWidth * zoom) + 'px';
     wrap.style.height = (page.offsetHeight * zoom) + 'px';
@@ -134,7 +160,37 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.appendChild(exportNode);
     }
     exportNode.innerHTML = InvoiceTemplate.render(docData, TT.getSettings());
+    InvoiceTemplate.fitToPage(exportNode);
     return exportNode;
+  }
+
+  // Imprime le même rendu PDF que downloadPdf() (voir pdf-export.js:
+  // print()), au lieu de window.print() sur la carte "Aperçu" réduite à
+  // 65 %. Évite l'espace blanc résiduel en bas de page lié à la hauteur
+  // de page "cible" en CSS d'impression (voir facture.js: printPreview()
+  // pour le détail).
+  async function printDocument(docData) {
+    const btn = document.getElementById('printDoc');
+
+    if (!window.PdfExport || !PdfExport.librariesReady()) {
+      window.print();
+      return;
+    }
+
+    const label = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Préparation…'; }
+
+    const exportNode = getExportNode(docData);
+
+    try {
+      await PdfExport.print(exportNode);
+    } catch (err) {
+      console.error(err);
+      Toast.error('Impression via le PDF impossible, ouverture de l\'aperçu classique.');
+      window.print();
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+    }
   }
 
   async function downloadPdf(docData) {

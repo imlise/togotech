@@ -107,6 +107,9 @@ window.TT = (function () {
       cachet:         '',
       footer:         'Merci de votre confiance — Togo Tech Group',
       conditions:     'Validité : 1 mois.\nDélai de livraison : Dès l\'accord.\nCondition de paiement : 60% à l\'accord et 40% à la livraison.\nGarantie : 1 an.',
+      banks: [
+        { logo: 'assets/images/orabank.png', name: 'Orabank', account: '' },
+      ],
     });
   }
 

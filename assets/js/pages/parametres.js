@@ -1,5 +1,7 @@
 'use strict';
 
+let banks = [];
+
 document.addEventListener('DOMContentLoaded', () => {
   TTLayout.initShell({ page: 'parametres', title: 'Paramètres' });
   document.getElementById('app-header').innerHTML = TTLayout.renderHeader({
@@ -21,6 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     reader.readAsDataURL(file);
   });
+
+  document.getElementById('addBankBtn')?.addEventListener('click', () => {
+    banks.push({ logo: '', name: '', account: '' });
+    renderBanks();
+  });
 });
 
 function loadSettings() {
@@ -40,6 +47,62 @@ function loadSettings() {
   document.getElementById('sConditions').value = s.conditions || '';
   document.getElementById('sSignature').checked = !!s.signature;
   if (s.logo) document.getElementById('logoImg').src = s.logo;
+
+  banks = Array.isArray(s.banks) ? s.banks.map(b => ({ ...b })) : [];
+  renderBanks();
+}
+
+function renderBanks() {
+  const list = document.getElementById('bankList');
+  if (!list) return;
+
+  if (banks.length === 0) {
+    list.innerHTML = '<p class="field__hint" style="margin:0">Aucune banque ajoutée pour le moment.</p>';
+    return;
+  }
+
+  list.innerHTML = banks.map((bank, i) => `
+    <div class="bank-row" data-index="${i}">
+      <div class="bank-row__logo">
+        <img src="${bank.logo || ''}" alt="Logo banque" style="${bank.logo ? '' : 'opacity:0'}" />
+      </div>
+      <input type="file" class="bank-row__logo-input" accept="image/*" hidden />
+      <button class="btn btn--secondary btn--sm bank-row__logo-btn" type="button">Logo</button>
+      <input class="field__input bank-row__name" type="text" placeholder="Nom de la banque" value="${escapeAttr(bank.name)}" />
+      <input class="field__input text-mono bank-row__account" type="text" placeholder="Numéro de compte" value="${escapeAttr(bank.account)}" />
+      <button class="btn btn--icon bank-row__remove" type="button" title="Supprimer cette banque" aria-label="Supprimer cette banque">✕</button>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.bank-row').forEach(row => {
+    const i = parseInt(row.dataset.index, 10);
+
+    row.querySelector('.bank-row__logo-btn').addEventListener('click', () => {
+      row.querySelector('.bank-row__logo-input').click();
+    });
+    row.querySelector('.bank-row__logo-input').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        banks[i].logo = ev.target.result;
+        const img = row.querySelector('.bank-row__logo img');
+        img.src = ev.target.result;
+        img.style.opacity = 1;
+      };
+      reader.readAsDataURL(file);
+    });
+    row.querySelector('.bank-row__name').addEventListener('input', e => { banks[i].name = e.target.value; });
+    row.querySelector('.bank-row__account').addEventListener('input', e => { banks[i].account = e.target.value; });
+    row.querySelector('.bank-row__remove').addEventListener('click', () => {
+      banks.splice(i, 1);
+      renderBanks();
+    });
+  });
+}
+
+function escapeAttr(str) {
+  return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
 function saveSettings() {
@@ -60,6 +123,7 @@ function saveSettings() {
     conditions: document.getElementById('sConditions').value,
     signature: document.getElementById('sSignature').checked,
     logo: window._pendingLogo || TT.getSettings().logo,
+    banks: banks.filter(b => b.logo || b.name || b.account),
   };
   TT.saveSettings(s);
   Toast.success('Paramètres enregistrés.');

@@ -146,7 +146,7 @@ window.DocumentsTable = (function () {
             <a href="document.html?id=${doc.id}" class="action-btn" title="Voir" data-tooltip="Voir"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7s2.5-5 6-5 6 5 6 5-2.5 5-6 5S1 7 1 7Z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7" r="1.5" stroke="currentColor" stroke-width="1.2"/></svg></a>
             <a href="facture.html?id=${doc.id}&edit=1" class="action-btn" title="Modifier"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5 11.5 4.5 4.5 11.5H2.5V9.5L9.5 2.5Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
             <button class="action-btn" data-action="pdf" data-id="${doc.id}" title="Télécharger PDF" data-tooltip="Télécharger PDF"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5v7M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 10.5v1.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
-            ${config.showDelete !== false ? `<button class="action-btn action-btn--danger" data-action="delete" data-id="${doc.id}" title="Supprimer"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M5 4V2.5h4V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>` : ''}
+            ${config.showDelete !== false ? `<button class="action-btn action-btn--danger" data-action="delete" data-id="${doc.id}" title="Supprimer"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M5 4V2.5h4V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.2 4l.6 7.2a1 1 0 0 0 1 .8h4.4a1 1 0 0 0 1-.8L10.8 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 6.3v3.6M8.5 6.3v3.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg></button>` : ''}
           </div>
         </td>
       </tr>
@@ -269,5 +269,69 @@ window.DocumentsTable = (function () {
     return state.filtered.filter(d => state.selected.has(d.id));
   }
 
-  return { init, refresh, getSelected, applyFilter };
+  const FILTER_LABELS = { all: 'Tous les documents', facture: 'Factures', proforma: 'Proformas' };
+
+  /**
+   * Imprime un rapport propre de la liste actuellement filtrée/recherchée
+   * — PAS un window.print() brut du tableau à l'écran, qui posait 3
+   * problèmes : la case à cocher et la colonne Actions n'ont aucun sens
+   * sur papier, le tableau (overflow-x scrollable à l'écran) se faisait
+   * couper net sur la droite plutôt que de s'adapter à la largeur de la
+   * page, et surtout seule la page actuellement affichée (ex. 10 lignes
+   * sur 47) était présente dans le DOM — le reste, invisible à l'écran,
+   * n'existait tout simplement pas pour l'impression.
+   * Ici on reconstruit un tableau dédié à partir de state.filtered (TOUTES
+   * les lignes qui correspondent aux filtres/recherche en cours, sans
+   * pagination), injecté dans #printReport (voir historique.html), que le
+   * CSS n'affiche qu'à l'impression (voir list.css: @media print).
+   */
+  function print() {
+    const container = document.getElementById('printReport');
+    if (!container) { window.print(); return; }
+
+    const rows = state.filtered;
+    const dateStr = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+    const filterLabel = FILTER_LABELS[state.filterType] || 'Tous les documents';
+    const searchNote = state.search ? ` &middot; recherche : "${TT.escapeHtml ? TT.escapeHtml(state.search) : state.search}"` : '';
+
+    container.innerHTML = `
+      <div class="print-report__head">
+        <div>
+          <h1>Historique des documents</h1>
+          <p>${filterLabel}${searchNote} &middot; ${rows.length} document${rows.length > 1 ? 's' : ''}</p>
+        </div>
+        <div class="print-report__date">Imprimé le ${dateStr}</div>
+      </div>
+      <table class="print-report__table">
+        <thead>
+          <tr>
+            <th>N° document</th>
+            <th>Type</th>
+            <th>Client</th>
+            <th>Objet</th>
+            <th>Montant</th>
+            <th>Date</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(doc => `
+            <tr>
+              <td class="td-mono">${doc.numero}</td>
+              <td>${typeLabel(doc.type)}</td>
+              <td>${doc.client}</td>
+              <td>${doc.objet}</td>
+              <td class="td-mono">${TT.formatCurrency(doc.montant, doc.devise || 'FCFA')}</td>
+              <td>${TT.formatDate(doc.date)}</td>
+              <td>${statusBadge(doc.status)}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="7" class="print-report__empty">Aucun document ne correspond aux filtres actuels.</td></tr>'}
+        </tbody>
+      </table>
+    `;
+
+    window.print();
+  }
+
+  return { init, refresh, getSelected, applyFilter, print };
 })();

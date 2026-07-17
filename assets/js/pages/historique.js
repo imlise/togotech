@@ -16,5 +16,5 @@ document.addEventListener('DOMContentLoaded', () => {
     Toast.success('Export CSV téléchargé.');
   });
 
-  document.getElementById('exportPrint')?.addEventListener('click', () => window.print());
+  document.getElementById('exportPrint')?.addEventListener('click', () => DocumentsTable.print());
 });

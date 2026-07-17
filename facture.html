@@ -55,9 +55,10 @@
                 <span class="form-section__step">Étape 1</span>
               </div>
               <div class="field-row field-row--2">
+                <input type="hidden" id="fNumero" />
                 <div class="field">
-                  <label class="field__label" for="fNumero">N° document</label>
-                  <input type="text" id="fNumero" class="field__input text-mono" readonly />
+                  <label class="field__label" for="fSuiviPar">Dossier suivi par</label>
+                  <input type="text" id="fSuiviPar" class="field__input" placeholder="Nom de la personne" />
                 </div>
                 <div class="field">
                   <label class="field__label" for="fDate">Date d'émission</label>
@@ -66,8 +67,8 @@
               </div>
               <div class="field-row field-row--2">
                 <div class="field">
-                  <label class="field__label" for="fEcheance">Date d'échéance</label>
-                  <input type="date" id="fEcheance" class="field__input" />
+                  <label class="field__label" for="fContact">Contact</label>
+                  <input type="text" id="fContact" class="field__input" inputmode="tel" placeholder="Numéro de téléphone" />
                 </div>
                 <div class="field">
                   <label class="field__label" for="fDevise">Devise</label>
