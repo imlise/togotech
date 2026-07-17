@@ -17,6 +17,7 @@ window.DocumentsTable = (function () {
       bulkBarId:     'bulkBar',
       emptyId:       'tableEmpty',
       getData:       () => TT.getDocs(),
+      // getData:       () => AA.getFactures(),
       onDelete:      (doc) => TT.moveToTrash(doc),
       ...options,
     };
@@ -75,7 +76,7 @@ window.DocumentsTable = (function () {
       render();
     });
 
-    document.getElementById(config.tbodyId)?.addEventListener('click', handleRowClick);
+
 
     config.exportHandlers?.();
   }
@@ -143,10 +144,23 @@ window.DocumentsTable = (function () {
         <td>${statusBadge(doc.status)}</td>
         <td>
           <div class="row-actions">
-            <a href="document.html?id=${doc.id}" class="action-btn" title="Voir" data-tooltip="Voir"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7s2.5-5 6-5 6 5 6 5-2.5 5-6 5S1 7 1 7Z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7" r="1.5" stroke="currentColor" stroke-width="1.2"/></svg></a>
-            <a href="facture.html?id=${doc.id}&edit=1" class="action-btn" title="Modifier"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5 11.5 4.5 4.5 11.5H2.5V9.5L9.5 2.5Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-            <button class="action-btn" data-action="pdf" data-id="${doc.id}" title="Télécharger PDF" data-tooltip="Télécharger PDF"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5v7M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 10.5v1.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
-            ${config.showDelete !== false ? `<button class="action-btn action-btn--danger" data-action="delete" data-id="${doc.id}" title="Supprimer"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M5 4V2.5h4V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>` : ''}
+            <a href="document.html?id=${doc.id}" class="action-btn"  title="Voir" data-tooltip="Voir"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7s2.5-5 6-5 6 5 6 5-2.5 5-6 5S1 7 1 7Z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7" r="1.5" stroke="currentColor" stroke-width="1.2"/></svg></a>
+            <a href="facture.html?id=${doc.id}&edit=1" class="action-btn" title="Modifier" data-tooltip="Modifier"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5 11.5 4.5 4.5 11.5H2.5V9.5L9.5 2.5Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <button class="action-btn" data-action="pdf" data-id="${doc.id}" title="Télécharger PDF" data-tooltip="Télécharger PDF" ><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5v7M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 10.5v1.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+            ${config.showDelete !== false ? `<button class="action-btn action-btn--danger" data-action="delete" data-id="${doc.id}" title="Supprimer" data-tooltip="Supprimer" 
+            onclick="supprimerFacture(${doc.id})">
+            
+
+            <!-- Modification, boutons suppression -->
+
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M3 6h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M8 6V4h8v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <rect x="6" y="6" width="12" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M10 10v6M14 10v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+            
+            </button>` : ''}
           </div>
         </td>
       </tr>
@@ -270,4 +284,57 @@ window.DocumentsTable = (function () {
   }
 
   return { init, refresh, getSelected, applyFilter };
+
+
+
+async function supprimerFacture(id) {
+
+    const facture = AA.getFacture(id);
+
+    const numero = facture?.reference || `#${id}`;
+    console.log(facture)
+
+
+    TTComponents.confirm({
+      title: 'Supprimer',
+      message: `Supprimer la facture ${numero} ?`,
+      danger: true
+
+    }).then(async ok => {
+
+      if (!ok) return;
+
+
+      try {
+
+        await AA.deleteFacture(id);
+
+        state.all = config.getData();
+        applyFilter();
+
+
+        Toast.success(`${numero} supprimé.`);
+
+
+      
+
+      } catch (error) {
+
+        console.error("Erreur suppression facture :", error);
+
+        Toast.error("Erreur lors de la suppression de la facture.");
+
+      }
+
+    });
+
+  }; 
+
+
 })();
+
+
+
+// Nouvelle Fonction pour gerer la suppression
+
+
