@@ -147,8 +147,7 @@ window.DocumentsTable = (function () {
             <a href="document.html?id=${doc.id}" class="action-btn"  title="Voir" data-tooltip="Voir"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7s2.5-5 6-5 6 5 6 5-2.5 5-6 5S1 7 1 7Z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7" r="1.5" stroke="currentColor" stroke-width="1.2"/></svg></a>
             <a href="facture.html?id=${doc.id}&edit=1" class="action-btn" title="Modifier" data-tooltip="Modifier"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5 11.5 4.5 4.5 11.5H2.5V9.5L9.5 2.5Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
             <button class="action-btn" data-action="pdf" data-id="${doc.id}" title="Télécharger PDF" data-tooltip="Télécharger PDF" ><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5v7M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 10.5v1.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
-            ${config.showDelete !== false ? `<button class="action-btn action-btn--danger" data-action="delete" data-id="${doc.id}" title="Supprimer" data-tooltip="Supprimer" 
-            onclick="supprimerFacture(${doc.id})">
+            ${config.showDelete !== false ? `<button class="action-btn action-btn--danger" data-action="delete" data-id="${doc.id}" title="Supprimer" data-tooltip="Supprimer" onclick="FacturesActions.supprimerFacture(${doc.id})">
             
 
             <!-- Modification, boutons suppression -->
@@ -284,15 +283,20 @@ window.DocumentsTable = (function () {
   }
 
   return { init, refresh, getSelected, applyFilter };
+})();
 
 
 
-async function supprimerFacture(id) {
+// Nouvelle Fonction pour gerer la suppression
 
-    const facture = AA.getFacture(id);
+
+window.FacturesActions = {
+
+  async supprimerFacture(id) {
+
+    const facture = await AA.getFacture(id);
 
     const numero = facture?.reference || `#${id}`;
-    console.log(facture)
 
 
     TTComponents.confirm({
@@ -309,14 +313,12 @@ async function supprimerFacture(id) {
 
         await AA.deleteFacture(id);
 
-        state.all = config.getData();
-        applyFilter();
-
+        
+          DocumentsTable.refresh();
+          window.location.reload();
 
         Toast.success(`${numero} supprimé.`);
 
-
-      
 
       } catch (error) {
 
@@ -328,13 +330,6 @@ async function supprimerFacture(id) {
 
     });
 
-  }; 
+  }
 
-
-})();
-
-
-
-// Nouvelle Fonction pour gerer la suppression
-
-
+};
