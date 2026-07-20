@@ -88,6 +88,14 @@
                 <h2 class="settings-section__title">Personnalisation PDF</h2>
                 <p class="settings-section__desc">Pied de page, conditions et signature sur vos documents.</p>
                 <div class="field"><label class="field__label">Pied de page</label><input class="field__input" id="sFooter" /></div>
+
+                <div class="field">
+                  <label class="field__label">Comptes bancaires (affichés dans le pied de page)</label>
+                  <p class="field__hint" style="margin-top:0;margin-bottom:var(--space-3)">Ajoutez autant de banques que nécessaire : logo, nom et numéro de compte.</p>
+                  <div id="bankList" class="bank-list"></div>
+                  <button class="btn btn--secondary btn--sm" id="addBankBtn" type="button" style="margin-top:var(--space-2)">+ Ajouter une banque</button>
+                </div>
+
                 <div class="field"><label class="field__label">Conditions générales par défaut</label><textarea class="field__textarea" id="sConditions" rows="5"></textarea></div>
                 <label class="toggle" style="margin-top:var(--space-4)">
                   <input type="checkbox" class="toggle__input" id="sSignature" />

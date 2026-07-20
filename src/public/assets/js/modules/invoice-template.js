@@ -81,8 +81,13 @@ window.InvoiceTemplate = (function () {
     const devise = doc.devise || settings.devise || 'FCFA';
     const fmt = n => TT.formatCurrency(Math.round(n), devise);
 
-    const echeanceRow = doc.echeance
-      ? `<div class="pdf-meta-line"><span class="pdf-meta-line__label">Échéance</span><span class="pdf-meta-line__value">${TT.formatDate(doc.echeance)}</span></div>`
+    
+    // const echeanceRow = doc.echeance
+    //   ? `<div class="pdf-meta-line"><span class="pdf-meta-line__label">Échéance</span><span class="pdf-meta-line__value">${TT.formatDate(doc.echeance)}</span></div>`
+    //   : '';
+
+    const suiviRow = doc.dossierSuivi
+      ? `<div class="pdf-meta-line"><span class="pdf-meta-line__label">Dossier suivi par</span><span class="pdf-meta-line__value">${escapeHtml(doc.dossierSuivi)}</span></div>`
       : '';
 
     const objetBand = doc.objet
@@ -104,6 +109,7 @@ window.InvoiceTemplate = (function () {
     const clientPhone = doc.telephone ? `<div class="pdf-meta-line"><span class="pdf-meta-line__value" style="font-size:7px;font-weight:500">${escapeHtml(doc.telephone)}</span></div>` : '';
 
     return `
+          <div class="pdf-scale-wrap">
       <div class="pdf-accent-bar"></div>
 
       <div class="pdf-top">
@@ -115,8 +121,7 @@ window.InvoiceTemplate = (function () {
             <span>${escapeHtml(settings.address || '')}</span>
             <span>${escapeHtml(settings.phone || '')}</span>
             <span>${escapeHtml(settings.email || '')}</span>
-            ${settings.rccm ? `<span>RCCM : ${escapeHtml(settings.rccm)}</span>` : ''}
-            ${settings.nif ? `<span>NIF : ${escapeHtml(settings.nif)}</span>` : ''}
+           
           </div>
         </div>
         <div class="pdf-tagline-block">
@@ -138,8 +143,8 @@ window.InvoiceTemplate = (function () {
         </div>
         <div class="pdf-meta-box">
           <div class="pdf-meta-line"><span class="pdf-meta-line__label">Date</span><span class="pdf-meta-line__value">${TT.formatDate(doc.date)}</span></div>
-          ${echeanceRow}
-          <div class="pdf-meta-line"><span class="pdf-meta-line__label">Contact</span><span class="pdf-meta-line__value">${escapeHtml(settings.company)}</span></div>
+                   ${suiviRow}
+          <div class="pdf-meta-line"><span class="pdf-meta-line__label">Contact</span><span class="pdf-meta-line__value">${escapeHtml(doc.contact) || '—'}</span></div>
         </div>
       </div>
 
@@ -183,13 +188,105 @@ window.InvoiceTemplate = (function () {
 
       <div class="pdf-footer">
         <div><strong>${escapeHtml(settings.company)}</strong> — ${escapeHtml(settings.footer || 'Merci de votre confiance')}</div>
+                ${(() => {
+          const banks = (settings.banks || []).filter(b => b.logo || b.name || b.account);
+          if (!banks.length) return '';
+          return `
         <div class="pdf-footer-banks">
-          <span>Banques :</span>
-          <img src="assets/images/orabank.png" alt="Orabank" />
-        </div>
+                  <span>${banks.length > 1 ? 'Banques :' : 'Banque :'}</span>
+          ${banks.map(bank => `
+          <span class="pdf-footer-bank">
+            ${bank.logo ? `<img src="${bank.logo}" alt="${escapeHtml(bank.name || 'Banque')}" />` : ''}
+            ${bank.name ? `<span class="pdf-footer-bank-name">${escapeHtml(bank.name)}</span>` : ''}
+            ${bank.account ? `<span class="pdf-footer-bank-account">N° compte : ${escapeHtml(bank.account)}</span>` : ''}
+          </span>`).join('')}
+        </div>`;
+        })()}
+        ${(() => {
+          // Le RCCM et le NIF sont des mentions légales obligatoires : elles
+          // doivent apparaître au pied de page du document (en plus de
+          // l'en-tête), comme sur les factures de référence de l'entreprise.
+          const parts = [];
+          if (settings.address) parts.push(escapeHtml(settings.address));
+          if (settings.nif) parts.push(`NIF : ${escapeHtml(settings.nif)}`);
+          if (settings.rccm) parts.push(`RCCM : ${escapeHtml(settings.rccm)}`);
+          if (!parts.length) return '';
+          return `<div class="pdf-footer-legal">${parts.join(' &nbsp;·&nbsp; ')}</div>`;
+        })()}
+      </div>
       </div>
     `;
   }
 
-  return { render };
+  
+ /**
+   * À appeler juste après avoir injecté render(...) dans un conteneur
+   * .pdf-page (pageEl.innerHTML = InvoiceTemplate.render(...)). Mesure la
+   * hauteur naturelle du contenu et choisit entre 3 comportements :
+   *
+   *  1. Contenu ≤ 1 page → classe .pdf-page--pinned : le pied de page est
+   *     collé en bas d'une page pleine (effet "papier à en-tête"), comme
+   *     actuellement pour une facture courte.
+   *  2. Contenu entre 1 page et ~1,2 page → on réduit légèrement tout le
+   *     bloc (transform: scale) pour le faire tenir sur une seule page.
+   *     Sans ça, le léger dépassement fait basculer le pied de page tout
+   *     seul sur une 2e page presque vide.
+   *  3. Contenu très supérieur à 1 page (facture avec beaucoup de lignes)
+   *     → on ne force rien : le document s'étale naturellement sur
+   *     plusieurs pages, comme un vrai document imprimé de plusieurs
+   *     feuilles ; le pied de page suit simplement le contenu.
+   *
+   * @param {HTMLElement} pageEl - le conteneur .pdf-page (dont le premier
+   *   enfant est .pdf-scale-wrap, produit par render() ci-dessus)
+   * @param {number} [targetMm=297] - hauteur de page visée, en mm. 297 par
+   *   défaut (aperçu écran + génération PDF, où l'on maîtrise exactement
+   *   les mm). Utiliser une valeur plus prudente (ex. 265) juste avant un
+   *   VRAI window.print() navigateur : la plupart des navigateurs ajoutent
+   *   ~12-13mm de marge haut/bas même avec @page{margin:0}, donc viser
+   *   297mm y ferait systématiquement déborder le pied de page sur une 2e
+   *   page presque vide — exactement le bug qu'on cherche à éviter.
+   */
+  function fitToPage(pageEl, targetMm) {
+    const wrap = pageEl && pageEl.querySelector('.pdf-scale-wrap');
+    if (!wrap) return;
+    targetMm = targetMm || 297;
+
+    // Toujours repartir d'un état neutre avant de mesurer : sinon on
+    // mesurerait un contenu déjà réduit par un appel précédent (facture
+    // qui vient de perdre des lignes après avoir été longue, ou bascule
+    // entre la cible 297mm et la cible 265mm de l'impression, par ex.).
+    wrap.style.transform = '';
+    wrap.style.minHeight = '';
+    pageEl.classList.remove('pdf-page--pinned');
+
+    const pageStyles = getComputedStyle(pageEl);
+    const paddingY = parseFloat(pageStyles.paddingTop || 0) + parseFloat(pageStyles.paddingBottom || 0);
+    // Hauteur de CONTENU visée = hauteur de page cible - padding haut/bas
+    // de .pdf-page (10mm + 8mm par défaut, voir facture.css).
+    const oneSheetPx = pageEl.clientWidth * (targetMm / 210) - paddingY;
+    const naturalPx = wrap.scrollHeight;
+    if (!oneSheetPx || !naturalPx) return;
+
+    if (naturalPx <= oneSheetPx) {
+      wrap.style.minHeight = oneSheetPx + 'px';
+      pageEl.classList.add('pdf-page--pinned');
+      return;
+    }
+
+    const overflowRatio = naturalPx / oneSheetPx;
+    if (overflowRatio <= 1.2) {
+      const ratio = oneSheetPx / naturalPx;
+      // Scale uniforme (X et Y), sans compenser la largeur : compenser la
+      // largeur obligerait le contenu à se ré-agencer sur une largeur plus
+      // grande (retours à la ligne différents dans les descriptions du
+      // tableau, etc.), ce qui invaliderait le ratio calculé ci-dessus —
+      // mesuré à la largeur normale. On accepte donc une marge résiduelle
+      // à droite/en bas, imperceptible pour un ratio aussi proche de 1.
+      wrap.style.transform = `scale(${ratio})`;
+    }
+    // au-delà de 1.2 : vraie facture longue, flux multi-pages naturel,
+    // on ne touche à rien de plus.
+  }
+
+  return { render, fitToPage };
 })();

@@ -79,7 +79,7 @@ async function populateClients() {
       btn.addEventListener('click', () => setType(btn.dataset.type));
     });
 
-    ['fNumero','fDate','fEcheance','fObjet','fClient','fEmail','fTelephone','fAdresse','fTva','fRemise','fConditions','fDevise'].forEach(id => {
+    ['fNumero','fDate','fSuiviPar','fContact','fObjet','fClient','fEmail','fTelephone','fAdresse','fTva','fRemise','fConditions','fDevise'].forEach(id => {
       $(id)?.addEventListener('input', syncAll);
       $(id)?.addEventListener('change', syncAll);
     });
@@ -263,6 +263,7 @@ async function autofillClient() {
     // Aperçu PDF — rendu par la même fonction que la page "Voir" et l'export PDF,
     // afin que les trois affichages soient toujours strictement identiques.
     $('pdfPage').innerHTML = InvoiceTemplate.render(getFormData(), TT.getSettings());
+    InvoiceTemplate.fitToPage($('pdfPage'));
     // Le contenu peut changer de hauteur (ajout/suppression de lignes) :
     // on resynchronise la taille du wrapper avec le zoom courant.
     applyZoom(zoom);
@@ -285,7 +286,8 @@ async function autofillClient() {
       adresse: $('fAdresse').value,
       objet: $('fObjet').value,
       date: $('fDate').value,
-      echeance: $('fEcheance').value,
+      dossierSuivi: $('fSuiviPar').value,
+      contact: $('fContact').value,
       devise: $('fDevise').value,
       tva: parseFloat($('fTva').value) || 0,
       remise: parseFloat($('fRemise').value) || 0,
@@ -418,7 +420,8 @@ async function autofillClient() {
     editId = null;
     setType(docType);
     $('fDate').value = TT.todayISO();
-    $('fEcheance').value = TT.addDaysISO(30);
+    $('fSuiviPar').value = '';
+    $('fContact').value = '';
     $('fClient').value = '';
     $('fEmail').value = '';
     $('fTelephone').value = '';
@@ -441,7 +444,8 @@ async function autofillClient() {
     setType(doc.type || 'facture');
     $('fNumero').value = doc.numero;
     $('fDate').value = doc.date;
-    $('fEcheance').value = doc.echeance || '';
+   $('fSuiviPar').value = doc.dossierSuivi || '';
+    $('fContact').value = doc.contact || '';
     $('fClient').value = doc.client || '';
     $('fEmail').value = doc.email || '';
     $('fTelephone').value = doc.telephone || '';
@@ -478,6 +482,26 @@ async function autofillClient() {
     applyZoom(zoom);
     $('zoomLevel').textContent = Math.round(zoom * 100) + '%';
   }
+   // On génère le PDF/impression à partir d'une copie hors écran à échelle
+  // 1 du même template (jamais depuis #pdfPage affiché, qui peut être
+  // zoomé/dézoomé par l'utilisateur) — exactement le même mécanisme que
+  // document.js: getExportNode(), qui donnait un meilleur résultat que la
+  // version précédente (applyZoom(1) sur le nœud live avant capture).
+  function getExportNode() {
+    let exportNode = document.getElementById('pdfExportNode');
+    if (!exportNode) {
+      exportNode = document.createElement('div');
+      exportNode.id = 'pdfExportNode';
+      exportNode.className = 'pdf-page';
+      exportNode.style.position = 'fixed';
+      exportNode.style.left = '-9999px';
+      exportNode.style.top = '0';
+      document.body.appendChild(exportNode);
+    }
+    exportNode.innerHTML = InvoiceTemplate.render(getFormData(), TT.getSettings());
+    InvoiceTemplate.fitToPage(exportNode);
+    return exportNode;
+  }
 
   // Calcule automatiquement un zoom qui fait tenir la page A4 (210mm)
   // dans la largeur disponible du panneau d'aperçu, pour que l'aperçu
@@ -503,7 +527,7 @@ async function autofillClient() {
 
   async function exportPdf() {
     const btn = $('downloadPdfBtn');
-    const previousZoom = zoom;
+
     const previousLabel = btn ? btn.textContent : '';
 
     if (!PdfExport.librariesReady()) {
@@ -512,32 +536,77 @@ async function autofillClient() {
     }
 
     if (btn) { btn.disabled = true; btn.textContent = 'Génération…'; }
-    // Le PDF doit refléter fidèlement la mise en page réelle : on capture
-    // toujours la page à échelle 1, quel que soit le zoom d'aperçu affiché.
-    applyZoom(1);
+
 
     try {
-      await new Promise(resolve => requestAnimationFrame(resolve));
       const filename = `${$('fNumero')?.value || (docType === 'proforma' ? 'proforma' : 'facture')}.pdf`;
-      await PdfExport.download($('pdfPage'), filename);
+      await PdfExport.download(getExportNode(), filename);
       Toast.success('PDF téléchargé.');
     } catch (err) {
       console.error(err);
       Toast.error(err?.message || 'Erreur lors de la génération du PDF.');
     } finally {
-      applyZoom(previousZoom);
+
       if (btn) { btn.disabled = false; btn.textContent = previousLabel; }
     }
   }
 
-  // Imprime le DOM live directement (window.print()) : le CSS @media print
-  // ci-dessous s'occupe de masquer l'éditeur, neutraliser le zoom et forcer
-  // les couleurs de fond. On évite volontairement le passage par
-  // html2canvas + iframe, qui échouait silencieusement (le clic ne
-  // déclenchait aucune boîte de dialogue d'impression sur certains
-  // navigateurs) et n'apportait rien que le CSS d'impression ne fasse déjà.
-  function printPreview() {
-    window.print();
+ // Imprime le même PDF que celui produit par "Télécharger PDF" (voir
+  // pdf-export.js: print()), plutôt que le DOM live via window.print() +
+  // CSS @media print. Comme le PDF est capturé à la hauteur réelle du
+  // contenu, ça élimine l'espace blanc résiduel en bas de page qu'un
+  // navigateur imprimant le DOM live pouvait laisser (hauteur de page
+  // "cible" en CSS vs zone imprimable réelle après marges du navigateur).
+  //
+  // Repli : si le visualiseur PDF intégré ne répond pas (rare), on
+  // retombe sur l'ancien window.print() plutôt que de laisser le bouton
+  // ne rien faire. Le filet ci-dessous (résidu bleuté sous le pied de
+  // page en fallback "Enregistrer en PDF") reste donc pertinent pour ce
+  // cas, même s'il ne sert plus au chemin normal.
+  let printStyleBackup = null;
+  function prepareForPrint() {
+    const preview = document.querySelector('.invoice-preview');
+    const scroll = $('previewScroll');
+    printStyleBackup = {
+      preview: preview ? preview.getAttribute('style') : null,
+      scroll: scroll ? scroll.getAttribute('style') : null,
+    };
+    if (preview) preview.style.background = '#ffffff';
+    if (scroll) { scroll.style.padding = '0'; scroll.style.overflow = 'visible'; }
+    // Cible prudente (265mm, pas 297mm) : voir le commentaire dans le
+    // bloc @media print de facture.css pour l'explication complète.
+    InvoiceTemplate.fitToPage($('pdfPage'), 265);
+  }
+  function restoreAfterPrint() {
+    const preview = document.querySelector('.invoice-preview');
+    const scroll = $('previewScroll');
+    if (preview) { printStyleBackup?.preview != null ? preview.setAttribute('style', printStyleBackup.preview) : preview.removeAttribute('style'); }
+    if (scroll) { printStyleBackup?.scroll != null ? scroll.setAttribute('style', printStyleBackup.scroll) : scroll.removeAttribute('style'); }
+    InvoiceTemplate.fitToPage($('pdfPage')); // retour à la cible normale (297mm) pour l'aperçu écran
+  }
+  window.addEventListener('beforeprint', prepareForPrint);
+  window.addEventListener('afterprint', restoreAfterPrint);
+
+  async function printPreview() {
+    const btn = $('printBtn');
+    const previousLabel = btn ? btn.textContent : '';
+
+    if (!window.PdfExport || !PdfExport.librariesReady()) {
+      window.print();
+      return;
+    }
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Préparation…'; }
+
+    try {
+      await PdfExport.print(getExportNode());
+    } catch (err) {
+      console.error(err);
+      Toast.error('Impression via le PDF impossible, ouverture de l\'aperçu classique.');
+      window.print();
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = previousLabel; }
+    }
   }
 
   return { init };

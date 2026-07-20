@@ -1330,7 +1330,29 @@
 }
 
 @media print {
-  .sidebar, .app-header, .mobile-bar, .mobile-bottom-nav, .toast-stack { display: none !important; }
+ /* `body` et `.app` ont un fond bleu clair (--color-bg) et un
+     min-height:100vh/100% à l'écran (pour remplir la fenêtre). À
+     l'impression, ce min-height ne correspond jamais exactement à la
+     hauteur du document imprimé (facture ≈ 290mm) : le moindre écart
+     fait basculer le surplus sur une 2e page, qui n'affiche alors plus
+     que ce fond bleu tout seul, sans contenu. Il faut donc forcer un
+     fond blanc et une hauteur libre (auto) sur ces conteneurs racine
+     pour l'impression, en plus de masquer la barre latérale. */
+  /* Note : .app-main et .app-content sont explicitement inclus ici,
+     pas seulement html/body/.app. En effet, la règle responsive
+     `@media (max-width: 1024px) { .app-main, .app-content { background:
+     var(--color-bg); } }` (fond bleu clair, pour le mode mobile) reste
+     active pendant l'impression : la largeur de page A4 en CSS (~794px)
+     est elle-même < 1024px, donc ce media query "mobile" matche aussi
+     à l'impression. Sans cette ligne, ce fond bleu repeignait tout
+     l'espace vide sous la facture (visible aussi bien dans l'aperçu
+     avant impression que sur le document imprimé). */
+  html, body, .app, .app-main, .app-content {
+    background: #ffffff !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+  #app-root, .sidebar, .app-header, .mobile-bar, .mobile-bottom-nav, .toast-stack { display: none !important; }
   .app-main { margin: 0; }
   .app-content {
     padding: 0;

@@ -282,7 +282,71 @@ window.DocumentsTable = (function () {
     return state.filtered.filter(d => state.selected.has(d.id));
   }
 
-  return { init, refresh, getSelected, applyFilter };
+ const FILTER_LABELS = { all: 'Tous les documents', facture: 'Factures', proforma: 'Proformas' };
+
+  /**
+   * Imprime un rapport propre de la liste actuellement filtrée/recherchée
+   * — PAS un window.print() brut du tableau à l'écran, qui posait 3
+   * problèmes : la case à cocher et la colonne Actions n'ont aucun sens
+   * sur papier, le tableau (overflow-x scrollable à l'écran) se faisait
+   * couper net sur la droite plutôt que de s'adapter à la largeur de la
+   * page, et surtout seule la page actuellement affichée (ex. 10 lignes
+   * sur 47) était présente dans le DOM — le reste, invisible à l'écran,
+   * n'existait tout simplement pas pour l'impression.
+   * Ici on reconstruit un tableau dédié à partir de state.filtered (TOUTES
+   * les lignes qui correspondent aux filtres/recherche en cours, sans
+   * pagination), injecté dans #printReport (voir historique.html), que le
+   * CSS n'affiche qu'à l'impression (voir list.css: @media print).
+   */
+  function print() {
+    const container = document.getElementById('printReport');
+    if (!container) { window.print(); return; }
+
+    const rows = state.filtered;
+    const dateStr = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+    const filterLabel = FILTER_LABELS[state.filterType] || 'Tous les documents';
+    const searchNote = state.search ? ` &middot; recherche : "${TT.escapeHtml ? TT.escapeHtml(state.search) : state.search}"` : '';
+
+    container.innerHTML = `
+      <div class="print-report__head">
+        <div>
+          <h1>Historique des documents</h1>
+          <p>${filterLabel}${searchNote} &middot; ${rows.length} document${rows.length > 1 ? 's' : ''}</p>
+        </div>
+        <div class="print-report__date">Imprimé le ${dateStr}</div>
+      </div>
+      <table class="print-report__table">
+        <thead>
+          <tr>
+            <th>N° document</th>
+            <th>Type</th>
+            <th>Client</th>
+            <th>Objet</th>
+            <th>Montant</th>
+            <th>Date</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(doc => `
+            <tr>
+              <td class="td-mono">${doc.numero}</td>
+              <td>${typeLabel(doc.type)}</td>
+              <td>${doc.client}</td>
+              <td>${doc.objet}</td>
+              <td class="td-mono">${TT.formatCurrency(doc.montant, doc.devise || 'FCFA')}</td>
+              <td>${TT.formatDate(doc.date)}</td>
+              <td>${statusBadge(doc.status)}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="7" class="print-report__empty">Aucun document ne correspond aux filtres actuels.</td></tr>'}
+        </tbody>
+      </table>
+    `;
+
+    window.print();
+  }
+
+  return { init, refresh, getSelected, applyFilter, print };
 })();
 
 

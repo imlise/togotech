@@ -121,3 +121,103 @@
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);
 }
+
+
+
+/* ============================================================
+   IMPRESSION — page Historique
+   Avant : le bouton "Imprimer" appelait window.print() nu sur le
+   tableau écran (voir historique.js) : case à cocher et colonne
+   Actions dénuées de sens sur papier, tableau tronqué à droite
+   (overflow-x scrollable à l'écran, coupé net à l'impression),
+   barre de recherche/filtres/pagination visibles, et surtout seule
+   la page affichée à l'écran (ex. 10 lignes sur 47) existait dans
+   le DOM — le reste n'était simplement pas imprimé.
+   Maintenant : DocumentsTable.print() (documents-table.js) construit
+   un rapport dédié dans #printReport à partir de TOUTES les lignes
+   filtrées/recherchées (sans pagination), que l'on affiche UNIQUEMENT
+   à l'impression, en masquant tout le reste de la page.
+   ============================================================ */
+.print-report { display: none; }
+
+@media print {
+  [data-page="historique"] .page-head,
+  [data-page="historique"] .bulk-bar,
+  [data-page="historique"] .card {
+    display: none !important;
+  }
+
+  .print-report {
+    display: block;
+  }
+
+  .print-report__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-bottom: 3mm;
+    margin-bottom: 4mm;
+    border-bottom: 2px solid var(--tt-navy-950, #003566);
+  }
+
+  .print-report__head h1 {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--tt-navy-950, #003566);
+    margin: 0 0 1mm;
+  }
+
+  .print-report__head p {
+    font-size: 9px;
+    color: var(--color-text-secondary, #6B7280);
+    margin: 0;
+  }
+
+  .print-report__date {
+    font-size: 9px;
+    color: var(--color-text-secondary, #6B7280);
+    white-space: nowrap;
+  }
+
+  .print-report__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;
+  }
+
+  .print-report__table thead th {
+    background: var(--tt-navy-950, #003566) !important;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    text-align: left;
+    font-size: 7.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 2.2mm 2.5mm;
+  }
+
+  .print-report__table tbody td {
+    padding: 1.8mm 2.5mm;
+    border-bottom: 1px solid var(--color-border-subtle, #E5E7EB);
+    vertical-align: middle;
+  }
+
+  .print-report__table tbody tr { break-inside: avoid; page-break-inside: avoid; }
+  .print-report__table tbody tr:last-child td { border-bottom: none; }
+  .print-report__table .td-mono { font-family: var(--font-mono); }
+
+  .print-report__empty {
+    text-align: center;
+    color: var(--color-text-tertiary, #9CA3AF);
+    padding: 8mm 0 !important;
+  }
+
+  .print-report .badge {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

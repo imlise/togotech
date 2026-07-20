@@ -112,7 +112,7 @@ function exportSelectedCSV() {
 
 function bindExportHandlers() {
   document.getElementById('exportCSV')?.addEventListener('click', () => exportCSV(docsCache, 'historique.csv'));
-  document.getElementById('exportPrint')?.addEventListener('click', () => window.print());
+  document.getElementById('exportPrint')?.addEventListener('click', () => DocumentsTable.print());
 }
 
 function exportCSV(docs, filename) {

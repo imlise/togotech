@@ -1,5 +1,49 @@
 /* TOGO TECH — Invoice Editor & Modern Proforma PDF */
 
+/* ── PDF Page (proforma moderne) ──
+   Taille A4 FIXE et non responsive : le document ne doit jamais se
+   réagencer selon la largeur de l'écran ou du conteneur (ce serait
+   incohérent entre l'éditeur, l'aperçu historique et le PDF exporté).
+   L'adaptation à l'écran se fait uniquement via zoom (transform: scale).
+
+   Important : .pdf-page est positionné en absolute avec transform-origin
+   top left, et c'est .preview-page-wrap (son parent) qui reçoit la taille
+   PIXEL réelle et déjà mise à l'échelle (voir applyZoom() en JS). Sans ça,
+   le navigateur continue de réserver l'espace de mise en page à la taille
+   NON réduite (794px) même quand la page est visuellement réduite à 65% :
+   ça crée un vide fantôme et un centrage/débordement incohérents. */
+/* ── Le document facturé ignore TOUJOURS le thème sombre de l'appli ──
+   Un document professionnel envoyé à un client ne doit jamais avoir
+   l'air d'avoir été généré en mode sombre — ni à l'aperçu, ni à
+   l'impression, ni dans le PDF téléchargé. C'est déjà garanti par
+   construction : .pdf-page a son propre fond blanc fixe et son propre
+   texte navy fixe (--tt-navy-*, --paper-gray-*), jamais liés aux tokens
+   --color---neutral- qui basculent avec [data-theme="dark"].
+   /* Ce bloc verrouille cette garantie de façon explicite et permanente :
+   même si un futur ajout de code venait à référencer par erreur un
+   token sensible au thème à l'intérieur de .pdf-page, il serait
+   automatiquement ramené à sa valeur CLAIRE ici, quel que soit le thème
+   actif sur le reste de l'application. */ 
+:root[data-theme="dark"] .pdf-page {
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #F9FAFB;
+  --color-text-primary: #0B1220;
+  --color-text-secondary: #4B5563;
+  --color-text-tertiary: #6B7280;
+  --color-border: #E5E7EB;
+  --color-border-subtle: rgba(17, 24, 39, 0.06);
+  --color-border-strong: #D1D5DB;
+  --neutral-0: #FFFFFF;
+  --neutral-50: #F9FAFB;
+  --neutral-100: #F3F4F6;
+  --neutral-150: #ECEEF1;
+  --neutral-200: #E5E7EB;
+}
+
+
+
 .invoice-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -83,47 +127,6 @@
   transition: width var(--duration-normal) var(--ease-out), height var(--duration-normal) var(--ease-out);
 }
 
-/* ── PDF Page (proforma moderne) ──
-   Taille A4 FIXE et non responsive : le document ne doit jamais se
-   réagencer selon la largeur de l'écran ou du conteneur (ce serait
-   incohérent entre l'éditeur, l'aperçu historique et le PDF exporté).
-   L'adaptation à l'écran se fait uniquement via zoom (transform: scale).
-
-   Important : .pdf-page est positionné en absolute avec transform-origin
-   top left, et c'est .preview-page-wrap (son parent) qui reçoit la taille
-   PIXEL réelle et déjà mise à l'échelle (voir applyZoom() en JS). Sans ça,
-   le navigateur continue de réserver l'espace de mise en page à la taille
-   NON réduite (794px) même quand la page est visuellement réduite à 65% :
-   ça crée un vide fantôme et un centrage/débordement incohérents. */
-/* ── Le document facturé ignore TOUJOURS le thème sombre de l'appli ──
-   Un document professionnel envoyé à un client ne doit jamais avoir
-   l'air d'avoir été généré en mode sombre — ni à l'aperçu, ni à
-   l'impression, ni dans le PDF téléchargé. C'est déjà garanti par
-   construction : .pdf-page a son propre fond blanc fixe et son propre
-   texte navy fixe (--tt-navy-*, --paper-gray-*), jamais liés aux tokens
-   --color-*/--neutral-* qui basculent avec [data-theme="dark"].
-   Ce bloc verrouille cette garantie de façon explicite et permanente :
-   même si un futur ajout de code venait à référencer par erreur un
-   token sensible au thème à l'intérieur de .pdf-page, il serait
-   automatiquement ramené à sa valeur CLAIRE ici, quel que soit le thème
-   actif sur le reste de l'application. */
-:root[data-theme="dark"] .pdf-page {
-  --color-bg: #ffffff;
-  --color-surface: #ffffff;
-  --color-surface-raised: #ffffff;
-  --color-surface-sunken: #F9FAFB;
-  --color-text-primary: #0B1220;
-  --color-text-secondary: #4B5563;
-  --color-text-tertiary: #6B7280;
-  --color-border: #E5E7EB;
-  --color-border-subtle: rgba(17, 24, 39, 0.06);
-  --color-border-strong: #D1D5DB;
-  --neutral-0: #FFFFFF;
-  --neutral-50: #F9FAFB;
-  --neutral-100: #F3F4F6;
-  --neutral-150: #ECEEF1;
-  --neutral-200: #E5E7EB;
-}
 
 .pdf-page {
   position: absolute;
@@ -133,15 +136,33 @@
   transition: transform var(--duration-normal) var(--ease-out);
   width: 210mm;
   flex: none;
-  min-height: 297mm;
   background: white;
   box-shadow: var(--shadow-xl);
   padding: 10mm 14mm 8mm;
   font-size: 9px;
   color: var(--tt-navy-950);
   line-height: 1.45;
+  overflow: hidden; /* nécessaire pendant la mesure de fitToPage() : évite un flash de scrollbar */
+}
+
+/* .pdf-scale-wrap englobe tout le contenu du document (voir
+   invoice-template.js: render()). C'est elle, et non .pdf-page, qui porte
+   la mise en page "page pleine" — pilotée en JS par
+   InvoiceTemplate.fitToPage(), appelée à chaque rendu :
+   - Contenu court (≤ 1 page) → classe .pdf-page--pinned : cette page fait
+     297mm de haut et le pied de page (margin-top:auto) est collé en bas,
+     comme une vraie feuille à en-tête même à moitié vide.
+   - Contenu à peine plus long qu'1 page (jusqu'à ~20% de dépassement) →
+     .pdf-scale-wrap est réduit d'un cran (transform: scale) pour retenir
+     l'ensemble sur une seule page, plutôt que de laisser le pied de page
+     se retrouver seul sur une 2e page quasi vide.
+   - Contenu franchement long (facture avec beaucoup de lignes) → aucune
+     classe, aucun transform : le document s'étale naturellement sur
+     plusieurs pages, comme un vrai document imprimé de plusieurs feuilles. */
+.pdf-scale-wrap {
   display: flex;
   flex-direction: column;
+  transform-origin: top left;
 }
 
 .pdf-accent-bar {
@@ -166,8 +187,8 @@
 }
 
 .pdf-logo {
-  width: 18mm;
-  height: 18mm;
+  width: 15mm;
+  height: 15mm;
   flex-shrink: 0;
   display: grid;
   place-items: center;
@@ -482,7 +503,7 @@
 }
 
 .pdf-footer {
-  margin-top: auto;
+  margin-top: 6mm; /* espacement par défaut : le pied de page suit directement le contenu */
   padding-top: 3mm;
   border-top: 2px solid var(--tt-navy-950);
   font-size: 6.5px;
@@ -491,13 +512,18 @@
   line-height: 1.55;
 }
 
+.pdf-page--pinned .pdf-footer {
+  margin-top: auto; /* facture courte : pousse le pied de page en bas de la page A4 complète */
+}
+
 .pdf-footer strong { color: var(--tt-navy-950); }
 
 .pdf-footer-banks {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2mm;
+  flex-wrap: wrap;
+  gap: 2mm 4mm;
   margin-top: 1.5mm;
 }
 
@@ -506,10 +532,32 @@
   color: var(--paper-gray-500);
 }
 
+.pdf-footer-bank {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.5mm;
+}
+
 .pdf-footer-banks img {
   height: 5mm;
   width: auto;
   object-fit: contain;
+}
+
+.pdf-footer-bank-name {
+  font-weight: 600;
+  color: var(--tt-navy-950);
+}
+
+.pdf-footer-bank-account {
+  color: var(--paper-gray-500);
+}
+
+.pdf-footer-legal {
+  margin-top: 1.5mm;
+  font-size: 6.5px;
+  font-weight: 600;
+  color: var(--paper-gray-500);
 }
 
 /* Form sections */
@@ -841,39 +889,31 @@
   }
 
   .invoice-editor, .preview-toolbar, .editor-toolbar { display: none !important; }
-  .invoice-layout { display: block; margin: 0; }
+  .invoice-layout { display: block; margin: 0; height: auto !important; overflow: visible !important; }
   .invoice-preview { height: auto; background: white; }
   .preview-scroll { padding: 0; overflow: visible; }
   .preview-page-wrap { width: auto !important; height: auto !important; }
   .pdf-page { position: static !important; transform: none !important; box-shadow: none !important; }
 
   /* ── Pied de page à l'impression ──
-     Ce qui se passait précédemment : `min-height: 297mm` (hauteur d'une
-     feuille A4 exacte) additionné aux marges d'impression réelles du
-     navigateur/pilote d'imprimante (qui ne sont jamais EXACTEMENT 0, à
-     cause des arrondis d'unité mm→px selon la résolution) dépassait tout
-     juste une page physique — le surplus, même de quelques dixièmes de
-     millimètre, suffit à faire basculer TOUT ce qui suit sur une 2e
-     page (une page ne se coupe jamais "à moitié", le moindre débordement
-     envoie le bloc entier plus loin).
-     Première tentative de correction : supprimer `min-height` à
-     l'impression. Résultat : plus de page 2, mais le document s'arrête
-     en haut de la feuille avec un grand vide en dessous — different de
-     l'aperçu à l'écran, qui montre toujours une page "pleine".
-     Bonne solution : garder l'aspect page pleine (comme à l'écran), mais
-     viser 290mm plutôt que 297mm exactement — une marge de sécurité de
-     7mm qui absorbe largement ces arrondis, invisible à l'œil, et qui
-     élimine le risque de basculement sur une 2e page. Le pied de page
-     retrouve son `margin-top: auto` d'origine (comme à l'écran) pour
-     rester ancré en bas de cette hauteur, au lieu d'un espacement fixe
-     qui le laissait "flotter" juste sous les signatures. */
-  .pdf-page {
-    min-height: 290mm !important;
-    padding-bottom: 8mm !important;
-  }
+     La hauteur de page et le collage du pied de page en bas ne sont PLUS
+     forcés ici en CSS statique : ils sont calculés dynamiquement en JS
+     juste avant l'impression (voir prepareForPrint() / beforeprint dans
+     facture.js et document.js), qui appelle
+     InvoiceTemplate.fitToPage(pageEl, 265) et pose le bon min-height/scale
+     directement en inline sur .pdf-scale-wrap.
+     Pourquoi 265mm et pas 297mm comme à l'écran/dans le PDF téléchargé :
+     la plupart des navigateurs ajoutent ~12-13mm de marge en haut ET en
+     bas à l'impression, même avec `@page { margin:0 }` défini ici. Viser
+     297mm dépasserait donc systématiquement la zone imprimable réelle
+     (~271mm), et le moindre dépassement bascule le pied de page tout seul
+     sur une 2e page presque vide — c'est justement le bug qu'on évite en
+     visant plus prudent. Pour une facture courte, il peut rester un léger
+     espace blanc en bas de la page imprimée : compromis nécessaire tant
+     que le navigateur ne garantit pas une zone imprimable de 297mm exacts. */
+  .pdf-page { padding-bottom: 8mm !important; }
 
   .pdf-footer {
-    margin-top: auto !important;
     break-inside: avoid;
     page-break-inside: avoid;
   }
