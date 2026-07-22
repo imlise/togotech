@@ -64,11 +64,9 @@ async function populateClients() {
 
   try {
     const clients = await AA.getClients();
-    console.log(clients);
     dl.innerHTML = clients
       .map(c => `<option value="${c.nom}">`)
       .join('');
-    console.log(dl);
   } catch (err) {
     console.error('Erreur chargement clients', err);
   }
@@ -140,7 +138,6 @@ async function autofillClient() {
   try {
 
     const clients = await AA.getClients();
-    console.log(clients)
     const client = clients.find(c => c.nom === name);
 
     if (client) {
@@ -172,7 +169,6 @@ async function autofillClient() {
     const id = TT.genId();
     lines.push({ id, ref: data.ref || '', desc: data.desc || '', qty: data.qty || 1, pu: data.pu || 0, remise: data.remise || 0, image: data.image || '' });
     renderLines();
-    console.log(lines);
   }
 
   function renderLines() {
@@ -286,7 +282,7 @@ async function autofillClient() {
       adresse: $('fAdresse').value,
       objet: $('fObjet').value,
       date: $('fDate').value,
-      dossierSuivi: $('fSuiviPar').value,
+      suiviPar: $('fSuiviPar').value,
       contact: $('fContact').value,
       devise: $('fDevise').value,
       tva: parseFloat($('fTva').value) || 0,
@@ -326,10 +322,13 @@ async function autofillClient() {
       client: clientId,
       devise: formData.devise || 'XOF',
 
+      suiviPar: formData.suiviPar,
+      contact: formData.contact,
+
       // 🔥 timestamps (important pour ton schema)
-      dateEcheance: formData.echeance
-        ? new Date(formData.echeance).getTime()
-        : null,
+      // dateEcheance: formData.echeance
+      //   ? new Date(formData.echeance).getTime()
+      //   : null,
 
       dateDePaiement: formData.date
         ? new Date(formData.date).getTime()
@@ -360,16 +359,16 @@ async function autofillClient() {
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json().catch(() => ({}));
+    const facture = await response.json().catch(() => ({}));
     if (!response.ok) {
       throw new Error(data.message || 'Erreur API facture');
     }
 
-    return data;
+    return facture;
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  function saveDocument(status) {
+  async function saveDocument(status) {
     if (!$('fClient').value || !$('fObjet').value) {
       Toast.error('Veuillez renseigner le client et l\'objet.');
       return;
@@ -399,15 +398,23 @@ async function autofillClient() {
     Toast.success('Document enregistré avec succès.');
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (status === 'sent') {
-      postToBackend(data).then(result => {
-        console.info('Facture envoyée au backend:', result);
-      }).catch(error => {
-        console.error('Erreur d’envoi parallèle vers le backend:', error);
-      });
-    }
+let result;     
+if (status === 'sent') {
+  try {
+    result = await postToBackend(data);
+
+    console.info('Facture envoyée au backend:', result);
+
+  } catch (error) {
+    console.error('Erreur d’envoi parallèle vers le backend:', error);
+  }
+  
+}
+const id = result.facture.id
+console.log(id);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    setTimeout(() => { window.location.href = `document.html?id=${data.id}`; }, 800);
+    setTimeout(() => { window.location.href = `document.html?id=${id}`; }, 800);
   }
 
   function duplicateDoc() {
@@ -444,7 +451,7 @@ async function autofillClient() {
     setType(doc.type || 'facture');
     $('fNumero').value = doc.numero;
     $('fDate').value = doc.date;
-   $('fSuiviPar').value = doc.dossierSuivi || '';
+   $('fSuiviPar').value = doc.suiviPar || '';
     $('fContact').value = doc.contact || '';
     $('fClient').value = doc.client || '';
     $('fEmail').value = doc.email || '';
@@ -577,6 +584,7 @@ async function autofillClient() {
     // bloc @media print de facture.css pour l'explication complète.
     InvoiceTemplate.fitToPage($('pdfPage'), 265);
   }
+  
   function restoreAfterPrint() {
     const preview = document.querySelector('.invoice-preview');
     const scroll = $('previewScroll');

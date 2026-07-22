@@ -45,31 +45,52 @@ window.InvoiceTemplate = (function () {
     return { ht, tva, ttc, tvaRate };
   }
 
-  function linesRowsHtml(doc) {
-    const lines = (doc.lines && doc.lines.length) ? doc.lines : [{ ref: '', desc: doc.objet, qty: 1, pu: doc.montant || 0, remise: 0, image: '' }];
-    const withContent = lines.filter(l => l.desc || l.pu);
+function linesRowsHtml(doc) {
+        const lines = (doc.lines && doc.lines.length)
+            ? doc.lines
+            : [{
+                nom: '',
+                description: doc.objet,
+                quantite: 1,
+                prixUnitaire: doc.montant || 0,
+                reduction: 0,
+                image: null,
+                montant: doc.montant || 0
+            }];
 
-    if (!withContent.length) {
-      return '<tr><td colspan="6" style="text-align:center;padding:16px;color:#94a3b8;font-size:8px">Aucune ligne — ajoutez des produits ou prestations</td></tr>';
-    }
+        // garder uniquement les lignes utiles
+        const withContent = lines.filter(l => l.description || l.prixUnitaire);
 
-    return withContent.map(l => `
-      <tr>
-        <td>${escapeHtml(l.ref) || '—'}</td>
-        <td>
-          <div class="pdf-line-desc">
-            ${l.image ? `<div class="pdf-line-img" style="background-image:url('${l.image}')"></div>` : ''}
-            <span>${escapeHtml(l.desc) || '—'}</span>
-          </div>
-        </td>
-        <td>${l.qty}</td>
-        <td>${TT.formatNumber(l.pu)}</td>
-        <td>${l.remise ? l.remise + '%' : '—'}</td>
-        <td>${TT.formatNumber(Math.round(l._total || 0))}</td>
-      </tr>
-    `).join('');
-  }
+        if (!withContent.length) {
+            return `
+            <tr>
+                <td colspan="6" style="text-align:center;padding:16px;color:#94a3b8;font-size:8px">
+                Aucune ligne — ajoutez des produits ou prestations
+                </td>
+            </tr>`;
+        }
 
+        return withContent.map(l => `
+            <tr>
+            <td>${escapeHtml(l.nom || '') || '—'}</td>
+
+            <td>
+                <div class="pdf-line-desc">
+                ${l.image ? `<div class="pdf-line-img" style="background-image:url('${l.image}')"></div>` : ''}
+                <span>${escapeHtml(l.description || '') || '—'}</span>
+                </div>
+            </td>
+
+            <td>${l.quantite ?? 0}</td>
+
+            <td>${TT.formatNumber(l.prixUnitaire ?? 0)}</td>
+
+            <td>${l.reduction ? l.reduction + '%' : '—'}</td>
+
+            <td>${TT.formatNumber(l.montant ?? 0)}</td>
+            </tr>
+        `).join('');
+}
   /**
    * Retourne le HTML interne (contenu) d'une page .pdf-page pour le
    * document donné. L'appelant est responsable d'englober ce HTML
@@ -91,15 +112,15 @@ window.InvoiceTemplate = (function () {
       ? `<div class="pdf-section-band"><span>${escapeHtml(doc.objet)}</span></div>`
       : '';
 
-    const conditionsBlock = doc.conditions
+    const conditionsBlock = doc.condition
       ? `<div class="pdf-conditions">
            <div class="pdf-conditions-title">Conditions générales</div>
-           <div class="pdf-conditions-text">${formatConditionsHtml(doc.conditions)}</div>
+           <div class="pdf-conditions-text">${formatConditionsHtml(doc.condition)}</div>
          </div>`
       : '<div></div>';
 
-    const amountWords = totals.ttc > 0
-      ? `<div class="pdf-amount-words">Arrêtée la présente facture à la somme de : <strong>${TT.amountToWords(totals.ttc)}</strong> TTC</div>`
+    const amountWords = doc.totalTtc > 0
+      ? `<div class="pdf-amount-words">Arrêtée la présente facture à la somme de : <strong>${TT.amountToWords(doc.totalTtc)}</strong> TTC</div>`
       : '';
 
     const clientEmail = doc.email ? `<div class="pdf-meta-line" style="margin-top:2mm"><span class="pdf-meta-line__value" style="font-size:7px;font-weight:500">${escapeHtml(doc.email)}</span></div>` : '';
@@ -164,9 +185,9 @@ window.InvoiceTemplate = (function () {
       <div class="pdf-bottom">
         ${conditionsBlock}
         <div class="pdf-totals">
-          <div class="pdf-total-row"><span>Total H.T.</span><span>${fmt(totals.ht)}</span></div>
-          <div class="pdf-total-row"><span>TVA (${totals.tvaRate}%)</span><span>${fmt(totals.tva)}</span></div>
-          <div class="pdf-total-row pdf-total-final"><span>Total TTC</span><span>${fmt(doc.montant != null ? doc.montant : totals.ttc)}</span></div>
+          <div class="pdf-total-row"><span>Total H.T.</span><span>${fmt(doc.totalHt)}</span></div>
+          <div class="pdf-total-row"><span>TVA (${totals.tvaRate}%)</span><span>${fmt(doc.tva)}</span></div>
+          <div class="pdf-total-row pdf-total-final"><span>Total TTC</span><span>${fmt(doc.totalTtc)}</span></div>
         </div>
       </div>
 

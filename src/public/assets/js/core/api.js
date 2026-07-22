@@ -70,6 +70,9 @@ window.AA = (function () {
   async function getClients() {
     return request('/clients');
   }
+  async function getClient(id) {
+    return request(`/clients/${id}`);
+  }
 
   async function createClient(data) {
     return request('/clients', {
@@ -88,6 +91,10 @@ window.AA = (function () {
 
   async function getFacture(id) {
     return request(`/factures/${id}`);
+  }
+
+  async function getFactureLignes(factureId) {
+    return request(`/factures/${factureId}/lignes`);
   }
 
   async function createFacture(data) {
@@ -127,10 +134,12 @@ window.AA = (function () {
     nextNumero,
 
     getClients,
+    getClient,
     createClient,
 
     getFactures,
     getFacture,
+    getFactureLignes,
     createFacture,
     updateFacture,
     deleteFacture,

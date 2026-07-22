@@ -146,7 +146,7 @@ window.DocumentsTable = (function () {
           <div class="row-actions">
             <a href="document.html?id=${doc.id}" class="action-btn"  title="Voir" data-tooltip="Voir"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7s2.5-5 6-5 6 5 6 5-2.5 5-6 5S1 7 1 7Z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7" r="1.5" stroke="currentColor" stroke-width="1.2"/></svg></a>
             <a href="facture.html?id=${doc.id}&edit=1" class="action-btn" title="Modifier" data-tooltip="Modifier"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5 11.5 4.5 4.5 11.5H2.5V9.5L9.5 2.5Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-            <button class="action-btn" data-action="pdf" data-id="${doc.id}" title="Télécharger PDF" data-tooltip="Télécharger PDF" ><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5v7M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 10.5v1.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+            <button class="action-btn" data-action="pdf" data-id="${doc.id}" title="Télécharger PDF" data-tooltip="Télécharger PDF" onclick="FacturesActions.telechargerPdf(${doc.id})"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5v7M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 10.5v1.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
             ${config.showDelete !== false ? `<button class="action-btn action-btn--danger" data-action="delete" data-id="${doc.id}" title="Supprimer" data-tooltip="Supprimer" onclick="FacturesActions.supprimerFacture(${doc.id})">
             
 
@@ -394,6 +394,68 @@ window.FacturesActions = {
 
     });
 
+  },
+  async telechargerPdf(id){
+    let facture = null;
+    let client = null;
+    let lines = [];
+    try {
+    facture = await AA.getFacture(id);
+    client = await AA.getClient(facture.client);
+
+   
+    // 🔥 récupérer les lignes ici
+    const lignesResult = await AA.getFactureLignes(facture.id);
+
+    lines = lignesResult.data ?? lignesResult;
+
+  } catch (error) {
+    console.error('Erreur lors du chargement de la facture :', error);
+    Toast.error('Impossible de charger la facture.');
+  }
+
+       if (!window.InvoiceTemplate || !window.PdfExport || !PdfExport.librariesReady()) {
+      // Repli : ouvre le document si les librairies PDF ne sont pas disponibles.
+      Toast.error('La génération du PDF n\'a pas pu être chargée.');
+      window.open(`document.html?id=${facture.id}`, '_blank');
+      return;
+    }
+
+
+    let exportNode = document.getElementById('__tableExportNode');
+    if (!exportNode) {
+      exportNode = document.createElement('div');
+      exportNode.id = '__tableExportNode';
+      exportNode.className = 'pdf-page';
+      exportNode.style.position = 'fixed';
+      exportNode.style.left = '-9999px';
+      exportNode.style.top = '0';
+      document.body.appendChild(exportNode);
+    }
+
+      let doc_send = {
+    numero : facture.reference,
+    date : facture.createdAt,
+    // contact : doc.contact,
+    client : client.nom,
+    email:client.email,
+    telephone:client.phone,
+    adresse:client.adresse,
+    objet:facture.objet,
+    condition: facture.condition,
+    lines:lines,
+    ...facture
+  };
+
+    exportNode.innerHTML = InvoiceTemplate.render(doc_send, TT.getSettings());
+
+    try {
+      await PdfExport.download(exportNode, `${facture.reference}.pdf`);
+      Toast.success(`${facture.reference}.pdf téléchargé.`);
+    } catch (err) {
+      console.error(err);
+      Toast.error('Erreur lors de la génération du PDF.');
+    } 
   }
 
 };

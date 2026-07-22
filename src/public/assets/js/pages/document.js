@@ -1,36 +1,90 @@
 'use strict';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   TTLayout.initShell({ page: 'historique', title: 'Document' });
 
-  const id = new URLSearchParams(location.search).get('id');
-  const doc = id ? TT.getDocById(id) : null;
   const container = document.getElementById('docContent');
+  const id = new URLSearchParams(location.search).get('id');
+  // const doc = id ? TT.getDocById(id) : null;
+  let doc = null;
+  let lines = [];
+
+if (id) {
+  try {
+    const result = await AA.getFacture(id);
+
+    doc = result;
+   
+    // 🔥 récupérer les lignes ici
+    const lignesResult = await AA.getFactureLignes(doc.id);
+
+    lines = lignesResult.data ?? lignesResult;
+
+    console.log(doc);
+    console.log(lines);
+  } catch (error) {
+    console.error('Erreur lors du chargement de la facture :', error);
+    Toast.error('Impossible de charger la facture.');
+  }
+}
+
 
   if (!doc) {
     container.innerHTML = `<div class="empty-state"><h2 class="empty-state__title">Document introuvable</h2><a href="historique.html" class="btn btn--secondary" style="margin-top:var(--space-4)">Retour à l'historique</a></div>`;
     return;
   }
 
+// seulement maintenant doc existe
+let client = null;
+
+try {
+  client = await AA.getClient(doc.client);
+} catch (error) {
+  console.error('Erreur chargement client :', error);
+  Toast.error('Client introuvable.');
+
+  client = {
+    nom: 'Client inconnu'
+  };
+}
+
+
+
+
+
   document.getElementById('app-header').innerHTML = TTLayout.renderHeader({
     breadcrumb: [
       { label: 'Dashboard', href: 'dashboard.html' },
       { label: 'Historique', href: 'historique.html' },
-      { label: doc.numero },
+      { label: doc.reference },
     ],
   }).replace(/^<header class="app-header">|<\/header>$/g, '');
 
-  const typeLabel = doc.type === 'proforma' ? 'Proforma' : doc.type === 'devis' ? 'Devis' : 'Facture';
+  let doc_send = {
+    numero : doc.reference,
+    date : doc.createdAt,
+    // contact : doc.contact,
+    client : client.nom,
+    email:client.email,
+    telephone:client.phone,
+    adresse:client.adresse,
+    objet:doc.objet,
+    condition: doc.condition,
+    lines:lines,
+    ...doc
+  };
+
+const typeLabel = doc.isProforma ? 'Proforma' : 'Facture';
 
   container.innerHTML = `
     <div class="page-head">
       <div class="page-head__text">
         <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2)">
-          <h1 class="page-head__title">${doc.numero}</h1>
+          <h1 class="page-head__title">${doc.reference}</h1>
           <span class="badge badge--${doc.type}">${typeLabel}</span>
           <span class="badge badge--${doc.status || 'sent'}">${doc.status === 'paid' ? 'Payée' : doc.status === 'draft' ? 'Brouillon' : 'Envoyée'}</span>
         </div>
-        <p class="page-head__sub">${doc.objet} — ${doc.client}</p>
+        <p class="page-head__sub">${doc.objet} — ${client.nom}</p>
       </div>
       <div class="page-head__actions">
         <button class="btn btn--danger btn--sm" id="deleteDoc">Supprimer</button>
@@ -47,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="card__body" style="padding:var(--space-4);background:var(--color-bg-muted);display:flex;justify-content:center;justify-content:safe center;overflow:auto">
           <div class="preview-page-wrap" style="flex:none">
             <div class="pdf-page" id="docPdfPage" style="box-shadow:var(--shadow-lg);transform:scale(0.65);transform-origin:top left">
-              ${InvoiceTemplate.render(doc, TT.getSettings())}
+            ${InvoiceTemplate.render(doc_send, TT.getSettings())}
             </div>
           </div>
         </div>
@@ -58,10 +112,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="card__header"><h2 class="card__title">Informations</h2></div>
           <div class="card__body">
             <div class="doc-meta-list">
-              <div class="doc-meta-item"><span class="doc-meta-label">Client</span><span class="doc-meta-value">${doc.client}</span></div>
-              <div class="doc-meta-item"><span class="doc-meta-label">Montant TTC</span><span class="doc-meta-value text-mono">${TT.formatCurrency(doc.montant, doc.devise)}</span></div>
-              <div class="doc-meta-item"><span class="doc-meta-label">Date d'émission</span><span class="doc-meta-value">${TT.formatDate(doc.date)}</span></div>
-                            <div class="doc-meta-item"><span class="doc-meta-label">Dossier suivi par</span><span class="doc-meta-value">${doc.dossierSuivi || '—'}</span></div>
+              <div class="doc-meta-item"><span class="doc-meta-label">Client</span><span class="doc-meta-value">${client.nom}</span></div>
+              <div class="doc-meta-item"><span class="doc-meta-label">Montant TTC</span><span class="doc-meta-value text-mono">${TT.formatCurrency(doc.totalHt, doc.devise)}</span></div>
+              <div class="doc-meta-item"><span class="doc-meta-label">Date d'émission</span><span class="doc-meta-value">${TT.formatDate(doc.createdAt)}</span></div>
+                            <div class="doc-meta-item"><span class="doc-meta-label">Dossier suivi par</span><span class="doc-meta-value">${doc.suiviPar || '—'}</span></div>
               <div class="doc-meta-item"><span class="doc-meta-label">Contact</span><span class="doc-meta-value">${doc.contact || '—'}</span></div>
               <div class="doc-meta-item"><span class="doc-meta-label">TVA</span><span class="doc-meta-value">${doc.tva || 18}%</span></div>
             </div>
@@ -137,12 +191,24 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.href = `facture.html?id=${doc.id}&edit=1`;
     Toast.info('Dupliquez et modifiez le document.');
   });
-  document.getElementById('deleteDoc')?.addEventListener('click', () => {
-    TTComponents.confirm({ title: 'Supprimer', message: `Déplacer ${doc.numero} vers la corbeille ?`, danger: true }).then(ok => {
+  document.getElementById('deleteDoc')?.addEventListener('click', async () => {
+    TTComponents.confirm({ title: 'Supprimer', message: `Déplacer ${doc.reference} vers la corbeille ?`, danger: true }).then(async ok => {
       if (!ok) return;
-      TT.moveToTrash(doc);
-      Toast.success('Document déplacé vers la corbeille.');
-      setTimeout(() => location.href = 'historique.html', 600);
+      
+  try {
+    console.log(doc)
+    await AA.deleteFacture(doc.id);
+
+    Toast.success('Facture supprimée avec succès.');
+
+    // setTimeout(() => {
+    //   location.href = 'historique.html';
+    // }, 600);
+
+  } catch (err) {
+    console.error(err);
+    Toast.error('Erreur lors de la suppression.');
+  }
     });
   });
 

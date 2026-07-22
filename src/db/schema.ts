@@ -35,10 +35,12 @@ export const facturesTable = sqliteTable("factures", {
 	id: int().primaryKey({ autoIncrement: true }),
 	reference: text().notNull(),
 	objet:text(),
+  	suiviPar: text("suivi_par"),
+	contact: text(),
 	totalHt: real("total_ht").notNull(),
 	tva: integer().default(18).notNull(),
 	totalTtc: real("total_ttc").notNull(),
-	dateEcheance: integer("date_echeance",{ mode: 'timestamp' }),
+	// dateEcheance: integer("date_echeance",{ mode: 'timestamp' }),
 	devise: text(),
 	dateDePaiement: integer("date_de_paiement",{ mode: 'timestamp' }),
 	isProforma: integer("is_proforma",{mode : 'boolean'}).notNull(),
@@ -47,10 +49,10 @@ export const facturesTable = sqliteTable("factures", {
 	remiseGlobale: integer("remise_globale"),
 
 	//  champ condition
-	conditon: text("condition"),
+	condition: text("condition"),
 
 
-	client: integer("client_id").references(() => clientsTable.id),
+	client: integer("client_id").references(() => clientsTable.id, { onDelete: "cascade" }),
 },);
 
 
