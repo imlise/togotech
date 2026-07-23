@@ -22,7 +22,7 @@ import { integer,int,real, sqliteTable, text, check } from "drizzle-orm/sqlite-c
 // 	delaiDeLivraison: text("delai_de_livraison"),
 // 	validite: text(),
 // 	garantie: text(),
-// 	conditonDePaienment: text("condition_de _paiement").default("60% à l'accord et 40% à la livraison"),
+// 	conditionDePaienment: text("condition_de _paiement").default("60% à l'accord et 40% à la livraison"),
 
 
 // 	client: integer("client_id").references(() => clientsTable.id),

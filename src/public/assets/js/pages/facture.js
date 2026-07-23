@@ -48,7 +48,7 @@ const InvoiceEditor = (function () {
       }
     }
 
-    addLine();
+    // addLine();
     syncAll();
     requestAnimationFrame(fitZoomToContainer);
   }
@@ -176,7 +176,7 @@ async function autofillClient() {
     container.innerHTML = lines.map((line, idx) => `
       <div class="line-row" data-id="${line.id}">
         <input type="text" class="field__input line-ref text-mono" placeholder="Réf." value="${line.ref || ''}" aria-label="Référence / N° de série" />
-        <textarea class="field__textarea line-desc" placeholder="Description" rows="1">${line.desc}</textarea>
+        <textarea class="field__textarea line-desc" required placeholder="Description" rows="1">${line.desc}</textarea>
         <label class="line-img-upload" title="Ajouter une image">
           ${line.image ? `<img src="${line.image}" alt="">` : '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'}
           <input type="file" accept="image/*" hidden class="line-img-input" />
@@ -336,7 +336,7 @@ async function autofillClient() {
 
       remiseGlobale: Number(formData.remiseGlobale || 0),
 
-      conditon: formData.conditions || null,
+      condition: formData.conditions,
     },
 
     lignes: lines.map(line => ({
@@ -403,6 +403,7 @@ async function editToBackend(id, formData) {
     }
 
     const data = getFormData();
+    console.log(data);
     data.status = status;
 
     if (status === 'draft') {
@@ -507,18 +508,6 @@ const id = result.id
     $('editorTitle').textContent = 'Modifier — ' + doc.reference;
 
 
-// lines = (fLines && fLines.length)
-//   ? fLines.map(l => ({ ...l })) // clone propre
-//   : [{
-//       id: crypto.randomUUID(),
-//       ref: l.ref,
-//       desc: l.description || '',
-//       qty: 1,
-//       pu: l.prixUnitaire,
-//       remise: l.reduction,
-//       image: l.image,
-//       // montant: doc.montant ?? 0
-//     }];
 
      lines = fLines.map(l => ({
       id:TT.genId(),
@@ -530,8 +519,6 @@ const id = result.id
   image: l.image
 }));
 
-    console.log(lines);
-    // console.log(fLines);
     renderLines();
     syncAll();
   }
