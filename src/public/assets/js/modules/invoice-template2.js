@@ -72,7 +72,7 @@ function linesRowsHtml(doc) {
 
         return withContent.map(l => `
             <tr>
-            <td>${escapeHtml(l.nom || '') || '—'}</td>
+            <td>${escapeHtml(l.ref || '') || '—'}</td>
 
             <td>
                 <div class="pdf-line-desc">

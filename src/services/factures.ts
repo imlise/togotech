@@ -54,6 +54,68 @@ export async function createFacture(data : any) {
     const factureId = insertedFacture[0].id;
 
     // 🔹 PREPARE LIGNES
+    const lignesToInsert = lignes.map((l: { prixUnitaire: any; reduction: number; quantite: any; ref: any; description: any; image: any; }) => {
+
+      const prix = l.prixUnitaire;
+      const reduction = l.reduction || 0;
+      const quantite = l.quantite;
+
+      // 🔥 calcul montant
+      const montant =
+        quantite * prix * (1 - reduction / 100);
+
+      return {
+        factureId,
+        ref: l.ref,
+        description: l.description,
+        image: l.image,
+        prixUnitaire: prix,
+        quantite,
+        reduction,
+        montant,
+      };
+    });
+
+
+    
+
+    // 🔹 INSERT LIGNES
+    await tx.insert(ligneProduitsTable).values(lignesToInsert);
+
+    return {
+      success: true,
+      facture: insertedFacture[0],
+    };
+  });
+}
+
+
+
+
+export async function updateFacture(factureId: number, data: any) {
+  const { facture, lignes } = data;
+
+  return await db.transaction(async (tx) => {
+
+    // 🔹 UPDATE FACTURE
+    const updatedFacture = await tx
+      .update(facturesTable)
+      .set({
+        ...facture,
+      })
+      .where(eq(facturesTable.id, factureId))
+      .returning();
+
+    if (!updatedFacture.length) {
+      throw new Error("Facture introuvable");
+    }
+
+    // 🔹 SUPPRESSION DES ANCIENNES LIGNES
+    await tx
+      .delete(ligneProduitsTable)
+      .where(eq(ligneProduitsTable.factureId, factureId));
+
+    // 🔹 PREPARE LIGNES
     const lignesToInsert = lignes.map((l: { prixUnitaire: any; reduction: number; quantite: any; nom: any; description: any; image: any; }) => {
 
       const prix = l.prixUnitaire;
@@ -76,15 +138,18 @@ export async function createFacture(data : any) {
       };
     });
 
-    // 🔹 INSERT LIGNES
-    await tx.insert(ligneProduitsTable).values(lignesToInsert);
+    // 🔹 INSERT NOUVELLES LIGNES
+    if (lignesToInsert.length > 0) {
+      await tx.insert(ligneProduitsTable).values(lignesToInsert);
+    }
 
     return {
       success: true,
-      facture: insertedFacture[0],
+      facture: updatedFacture[0],
     };
   });
 }
+
 
 
 export async function getAllFactures() {
@@ -121,23 +186,24 @@ export async function getFactureById(id: number) {
 
 
 
-export async function updateFacture(
-  id: number,
-  updates: Partial<typeof facturesTable.$inferInsert>
-) {
-  try {
-    await db
-      .update(facturesTable)
-      .set(updates)
-      .where(eq(facturesTable.id, id));
+// export async function updateFacture(
+//   id: number,
+//   updates: Partial<typeof facturesTable.$inferInsert>
+// ) {
+//   try {
+//     await db
+//       .update(facturesTable)
+//       .set(updates)
+//       .where(eq(facturesTable.id, id));
     
-    console.log('✅ Facture updated!');
-    return { success: true, message: 'Facture updated successfully' };
-  } catch (error) {
-    console.error('❌ Error updating facture:', error);
-    throw error;
-  }
-}
+//     console.log('✅ Facture updated!');
+//     return { success: true, message: 'Facture updated successfully' };
+//   } catch (error) {
+//     console.error('❌ Error updating facture:', error);
+//     throw error;
+//   }
+// }
+
 
 
 export async function deleteFacture(id: number) {

@@ -65,13 +65,13 @@ export const ligneProduitsTable = sqliteTable("ligne_produit", {
 	}),
 
 
-  nom: text().notNull(),
-  description: text().notNull(),
+  ref: text(),
+  description: text(),
   image: text(),
 
-  prixUnitaire: real("prix_unitaire").notNull(),
+  prixUnitaire: real("prix_unitaire"),
 
-  quantite: integer().notNull(),
+  quantite: integer(),
   reduction:integer(),
   montant: integer(),
 

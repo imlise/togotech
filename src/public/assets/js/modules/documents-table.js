@@ -436,7 +436,6 @@ window.FacturesActions = {
       let doc_send = {
     numero : facture.reference,
     date : facture.createdAt,
-    // contact : doc.contact,
     client : client.nom,
     email:client.email,
     telephone:client.phone,
@@ -455,7 +454,8 @@ window.FacturesActions = {
     } catch (err) {
       console.error(err);
       Toast.error('Erreur lors de la génération du PDF.');
-    } 
+    }
+     
   }
 
 };

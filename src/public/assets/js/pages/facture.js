@@ -352,23 +352,51 @@ async function autofillClient() {
   }
 
   async function postToBackend(formData) {
+   try {
     const payload = await buildBackendPayload(formData);
-    const response = await fetch('/api/factures', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    const facture = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(data.message || 'Erreur API facture');
+    const response = await AA.createFacture(payload);
+    console.log(response);
+    const facture = response.facture;
+   
+    if (!response.success) {
+      throw new Error(response.message || 'Erreur API facture');
     }
 
     return facture;
+}
+   catch (error) {
+    console.error("Erreur création facture :", error);
+    throw error;
   }
+  }
+
+async function editToBackend(id, formData) {
+  try {
+    const payload = await buildBackendPayload(formData);
+
+    const response = await AA.updateFacture(id, payload);
+
+    console.log("Réponse update API :", response);
+
+    if (!response.success) {
+      throw new Error(response.message || 'Erreur API facture');
+    }
+
+    const facture = response.facture;
+
+    return facture;
+
+  } catch (error) {
+    console.error("Erreur modification facture :", error);
+    throw error;
+  }
+}
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   async function saveDocument(status) {
+    let result;   
+
+
     if (!$('fClient').value || !$('fObjet').value) {
       Toast.error('Veuillez renseigner le client et l\'objet.');
       return;
@@ -388,6 +416,8 @@ async function autofillClient() {
 
     let docs = TT.getDocs();
     if (editId) {
+      result = await editToBackend(editId,data);
+      console.info('Facture editée avec  succēs:', result);
       docs = docs.map(d => d.id === editId ? { ...d, ...data, createdAt: d.createdAt } : d);
     } else {
       docs.unshift(data);
@@ -397,24 +427,26 @@ async function autofillClient() {
     TT.addNotification('create', `${docType === 'proforma' ? 'Proforma' : 'Facture'} ${data.numero} enregistrée.`);
     Toast.success('Document enregistré avec succès.');
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-let result;     
+///////////////////////////////////    Enregistrement de facture   /////////////////////////////////////////////////////////////////////////////////////////
+  
 if (status === 'sent') {
   try {
     result = await postToBackend(data);
 
-    console.info('Facture envoyée au backend:', result);
+    // console.info('Facture envoyée au backend:', result);
+    console.info('Facture envoyée au backend');
 
   } catch (error) {
     console.error('Erreur d’envoi parallèle vers le backend:', error);
   }
   
 }
-const id = result.facture.id
-console.log(id);
+const id = result.id
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if(id){
     setTimeout(() => { window.location.href = `document.html?id=${id}`; }, 800);
+  }
   }
 
   function duplicateDoc() {
@@ -443,28 +475,63 @@ console.log(id);
     syncAll();
   }
 
-  function loadDocument(id) {
-    const doc = TT.getDocById(id) || TT.getDrafts().find(d => d.id === id);
+  async function loadDocument(id) {
+    // const doc = TT.getDocById(id) || TT.getDrafts().find(d => d.id === id);
+    const doc = await AA.getFacture(id);
+    let client = null;
+    let fLines = [];
+    client = await AA.getClient(doc.client);
+
+    // 🔥 récupérer les lignes ici
+    const lignesResult = await AA.getFactureLignes(doc.id);
+
+    fLines = lignesResult.data ?? lignesResult;
+
     if (!doc) { Toast.error('Document introuvable.'); return; }
 
     editId = id;
     setType(doc.type || 'facture');
-    $('fNumero').value = doc.numero;
-    $('fDate').value = doc.date;
+    $('fNumero').value = doc.reference;
+    $('fDate').value = new Date(doc.createdAt);
    $('fSuiviPar').value = doc.suiviPar || '';
     $('fContact').value = doc.contact || '';
-    $('fClient').value = doc.client || '';
-    $('fEmail').value = doc.email || '';
-    $('fTelephone').value = doc.telephone || '';
-    $('fAdresse').value = doc.adresse || '';
+    $('fClient').value = client.nom || '';
+    $('fEmail').value = client.email || '';
+    $('fTelephone').value = client.phone || '';
+    $('fAdresse').value = client.adresse || '';
     $('fObjet').value = doc.objet || '';
     $('fTva').value = doc.tva || settings.tva;
-    $('fRemise').value = doc.remise || 0;
+    $('fRemise').value = doc.remiseGlobale || 0;
     $('fDevise').value = doc.devise || 'FCFA';
-    $('fConditions').value = doc.conditions || settings.conditions;
-    $('editorTitle').textContent = 'Modifier — ' + doc.numero;
+    $('fConditions').value = doc.condition;
+    $('editorTitle').textContent = 'Modifier — ' + doc.reference;
 
-    lines = doc.lines?.length ? TT.clone(doc.lines) : [{ id: TT.genId(), ref: '', desc: doc.objet, qty: 1, pu: doc.montant || 0, remise: 0, image: '' }];
+
+// lines = (fLines && fLines.length)
+//   ? fLines.map(l => ({ ...l })) // clone propre
+//   : [{
+//       id: crypto.randomUUID(),
+//       ref: l.ref,
+//       desc: l.description || '',
+//       qty: 1,
+//       pu: l.prixUnitaire,
+//       remise: l.reduction,
+//       image: l.image,
+//       // montant: doc.montant ?? 0
+//     }];
+
+     lines = fLines.map(l => ({
+      id:TT.genId(),
+  ref: l.nom,
+  desc: l.description || '',
+  qty: l.quantite,
+  pu: l.prixUnitaire,
+  remise: l.reduction,
+  image: l.image
+}));
+
+    console.log(lines);
+    // console.log(fLines);
     renderLines();
     syncAll();
   }
