@@ -151,7 +151,7 @@ function linesRowsHtml(doc) {
       <div class="pdf-meta-grid">
         <div class="pdf-meta-box">
           <div class="pdf-meta-box__label">Client</div>
-          <div class="pdf-meta-box__value">${escapeHtml(doc.client) || '—'}</div>
+           <div class="pdf-meta-box__value">${escapeHtml(doc.client) || '—'}</div>
           ${clientEmail}
           ${clientPhone}
         </div>

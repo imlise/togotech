@@ -19,9 +19,6 @@ if (id) {
     const lignesResult = await AA.getFactureLignes(doc.id);
 
     lines = lignesResult.data ?? lignesResult;
-
-    console.log(doc);
-    console.log(lines);
   } catch (error) {
     console.error('Erreur lors du chargement de la facture :', error);
     Toast.error('Impossible de charger la facture.');
@@ -61,6 +58,8 @@ try {
   }).replace(/^<header class="app-header">|<\/header>$/g, '');
 
   let doc_send = {
+    ...doc,
+
     numero : doc.reference,
     date : doc.createdAt,
     // contact : doc.contact,
@@ -71,8 +70,9 @@ try {
     objet:doc.objet,
     condition: doc.condition,
     lines:lines,
-    ...doc
   };
+  console.log(client);
+  console.log(doc_send);
 
 const typeLabel = doc.isProforma ? 'Proforma' : 'Facture';
 
@@ -88,7 +88,8 @@ const typeLabel = doc.isProforma ? 'Proforma' : 'Facture';
       </div>
       <div class="page-head__actions">
         <button class="btn btn--danger btn--sm" id="deleteDoc">Supprimer</button>
-        <button class="btn btn--secondary btn--sm" id="duplicateDoc">Dupliquer</button>
+        <!-- 
+        <button class="btn btn--secondary btn--sm" id="duplicateDoc">Dupliquer</button> -->
         <button class="btn btn--secondary btn--sm" id="printDoc">Imprimer</button>
         <button class="btn btn--navy btn--sm" id="downloadPdfDoc">Télécharger PDF</button>
         <a href="facture.html?id=${doc.id}&edit=1" class="btn btn--primary btn--sm">Modifier</a>
@@ -168,8 +169,8 @@ const typeLabel = doc.isProforma ? 'Proforma' : 'Facture';
   }
   window.addEventListener('beforeprint', prepareForPrint);
   window.addEventListener('afterprint', restoreAfterPrint);
-  document.getElementById('printDoc')?.addEventListener('click', () => printDocument(doc));
-  document.getElementById('downloadPdfDoc')?.addEventListener('click', () => downloadPdf(doc));
+  document.getElementById('printDoc')?.addEventListener('click', () => printDocument(doc_send));
+  document.getElementById('downloadPdfDoc')?.addEventListener('click', () => downloadPdf(doc_send));
 
   // .pdf-page est en position:absolute avec transform-origin:top left
   // (voir facture.css, partagée avec l'éditeur de facture) : c'est

@@ -441,7 +441,7 @@ window.FacturesActions = {
     telephone:client.phone,
     adresse:client.adresse,
     objet:facture.objet,
-    condition: facture.condition,
+    conditions: facture.condition,
     lines:lines,
     ...facture
   };
