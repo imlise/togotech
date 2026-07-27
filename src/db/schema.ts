@@ -42,14 +42,23 @@ export const facturesTable = sqliteTable("factures", {
 	totalTtc: real("total_ttc").notNull(),
 	// dateEcheance: integer("date_echeance",{ mode: 'timestamp' }),
 	devise: text(),
-	dateDePaiement: integer("date_de_paiement",{ mode: 'timestamp' }),
+	// dateDePaiement: integer("date_de_paiement",{ mode: 'timestamp' }),
+	dateDePaiement: text("date_de_paiement"),
 	isProforma: integer("is_proforma",{mode : 'boolean'}).notNull(),
-	createdAt: integer("created_at",{ mode : 'timestamp'}).notNull().default(sql`(current_timestamp)`),
+	// createdAt: integer("created_at",{ mode : 'timestamp'}).notNull().default(sql`(current_timestamp)`),
+	createdAt: text("created_at"),
 
 	remiseGlobale: integer("remise_globale"),
 
 	//  champ condition
 	condition: text("condition"),
+	
+	// Mise place brouillon et corbeille
+	status:text().default("paid"),
+	// updatedAt: integer("updated_at",{ mode: 'timestamp' }),
+	updatedAt: text("updated_at"),
+	// deletedAt: integer("deleted_at",{ mode: 'timestamp' }),
+	deletedAt: text("deleted_at"),
 
 
 	client: integer("client_id").references(() => clientsTable.id, { onDelete: "cascade" }),

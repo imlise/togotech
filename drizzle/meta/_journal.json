@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1784909861511,
+      "tag": "0000_eager_moon_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1785005965710,
+      "tag": "0001_tricky_phil_sheldon",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785013895054,
+      "tag": "0002_grey_dakota_north",
+      "breakpoints": true
+    }
+  ]
+}

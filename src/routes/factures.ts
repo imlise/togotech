@@ -19,7 +19,8 @@ const router = express.Router();
 // GET /api/factures
 router.get("/", async (req, res) => {
   try {
-    const factures = await getAllFactures();
+    const {status} = req.query;
+    const factures = await getAllFactures(status as string);
     res.status(200).json(factures);
   } catch (error) {
     res.status(500).json({
@@ -144,7 +145,7 @@ router.post("/", async (req, res) => {
     const facture = {
       ...body,
       // dateEcheance: toTimestamp(body.dateEcheance),
-      // dateDePaiement: toTimestamp(body.dateDePaiement),
+      dateDePaiement: toTimestamp(body.dateDePaiement),
       // dateDeLivraison: toTimestamp(body.dateDeLivraison),
     };
 

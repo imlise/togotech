@@ -85,10 +85,13 @@ window.AA = (function () {
   // 🔹 FACTURES
   // =========================
 
-  async function getFactures() {
-    return request('/factures');
-  }
+async function getFactures(status) {
+  const url = status 
+    ? `/factures?status=${encodeURIComponent(status)}`
+    : '/factures';
 
+  return request(url);
+}
   async function getFacture(id) {
     return request(`/factures/${id}`);
   }

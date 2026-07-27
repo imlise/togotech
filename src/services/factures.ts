@@ -36,7 +36,8 @@ export async function generateReference(isProforma: boolean) {
 
 
 export async function createFacture(data : any) {
-  const { facture, lignes } = data;
+  try{
+    const { facture, lignes } = data;
 
   return await db.transaction(async (tx) => {
 
@@ -87,76 +88,192 @@ export async function createFacture(data : any) {
       facture: insertedFacture[0],
     };
   });
+}catch (error: any) {
+    console.error("❌ createFacture error:", error);
+
+    return {
+      success: false,
+      message: error.message || "Erreur lors de la création de la facture",
+    };
+  }
 }
-
-
 
 
 export async function updateFacture(factureId: number, data: any) {
-  const { facture, lignes } = data;
-
-  return await db.transaction(async (tx) => {
-
-    // 🔹 UPDATE FACTURE
-    const updatedFacture = await tx
-      .update(facturesTable)
-      .set({
-        ...facture,
-      })
-      .where(eq(facturesTable.id, factureId))
-      .returning();
-
-    if (!updatedFacture.length) {
-      throw new Error("Facture introuvable");
+  try {
+    if (!factureId) {
+      throw new Error("factureId manquant");
     }
 
-    // 🔹 SUPPRESSION DES ANCIENNES LIGNES
-    await tx
-      .delete(ligneProduitsTable)
-      .where(eq(ligneProduitsTable.factureId, factureId));
+    if (!data || typeof data !== "object") {
+      throw new Error("Données invalides");
+    }
 
-    // 🔹 PREPARE LIGNES
-    const lignesToInsert = lignes.map((l: { prixUnitaire: any; reduction: number; quantite: any; nom: any; description: any; image: any; }) => {
+    const { facture, lignes } = data;
 
-      const prix = l.prixUnitaire;
-      const reduction = l.reduction || 0;
-      const quantite = l.quantite;
+    if (!facture) {
+      throw new Error("Objet facture manquant");
+    }
 
-      // 🔥 calcul montant
-      const montant =
-        quantite * prix * (1 - reduction / 100);
+    return await db.transaction(async (tx) => {
+
+      // 🔥 nettoyer les champs undefined
+      const cleanFacture = Object.fromEntries(
+        Object.entries(facture).filter(([_, v]) => v !== undefined)
+      );
+
+      if (Object.keys(cleanFacture).length === 0) {
+        throw new Error("Aucune donnée à mettre à jour");
+      }
+
+      // 🔹 UPDATE FACTURE
+      const updatedFacture = await tx
+        .update(facturesTable)
+        .set(cleanFacture)
+        .where(eq(facturesTable.id, factureId))
+        .returning();
+
+      if (!updatedFacture.length) {
+        throw new Error("Facture introuvable");
+      }
+
+      // 🔹 SUPPRESSION DES ANCIENNES LIGNES
+      // await tx
+      //   .delete(ligneProduitsTable)
+      //   .where(eq(ligneProduitsTable.factureId, factureId));
+
+// Si lignes n'est pas fourni, on ne touche pas aux lignes existantes
+if (lignes !== undefined) {
+  await tx.delete(ligneProduitsTable).where(eq(ligneProduitsTable.factureId, factureId));
+  
+}
+
+      // 🔹 PREPARE LIGNES
+      const lignesToInsert = (lignes || []).map((l: any) => {
+
+        if (!l) {
+          throw new Error("Ligne invalide");
+        }
+
+        const prix = Number(l.prixUnitaire) || 0;
+        const reduction = Number(l.reduction) || 0;
+        const quantite = Number(l.quantite) || 0;
+
+        const montant = quantite * prix * (1 - reduction / 100);
+
+        return {
+          factureId,
+          nom: l.nom || '',
+          description: l.description || '',
+          image: l.image || null,
+          prixUnitaire: prix,
+          quantite,
+          reduction,
+          montant,
+        };
+      });
+
+      // 🔹 INSERT NOUVELLES LIGNES
+      if (lignesToInsert.length > 0) {
+        await tx.insert(ligneProduitsTable).values(lignesToInsert);
+      }
 
       return {
-        factureId,
-        nom: l.nom,
-        description: l.description,
-        image: l.image,
-        prixUnitaire: prix,
-        quantite,
-        reduction,
-        montant,
+        success: true,
+        facture: updatedFacture[0],
       };
     });
 
-    // 🔹 INSERT NOUVELLES LIGNES
-    if (lignesToInsert.length > 0) {
-      await tx.insert(ligneProduitsTable).values(lignesToInsert);
-    }
+  } catch (error: any) {
+    console.error("❌ updateFacture error:", error);
 
     return {
-      success: true,
-      facture: updatedFacture[0],
+      success: false,
+      message: error.message || "Erreur lors de la mise à jour de la facture",
     };
-  });
+  }
 }
 
 
+// export async function updateFacture(factureId: number, data: any) {
+//   const { facture, lignes } = data;
 
-export async function getAllFactures() {
+//   return await db.transaction(async (tx) => {
+
+//     // 🔹 UPDATE FACTURE
+//     const updatedFacture = await tx
+//       .update(facturesTable)
+//       .set({
+//         ...facture,
+//       })
+//       .where(eq(facturesTable.id, factureId))
+//       .returning();
+
+//     if (!updatedFacture.length) {
+//       throw new Error("Facture introuvable");
+//     }
+
+//     // 🔹 SUPPRESSION DES ANCIENNES LIGNES
+//     await tx
+//       .delete(ligneProduitsTable)
+//       .where(eq(ligneProduitsTable.factureId, factureId));
+
+//     // 🔹 PREPARE LIGNES
+//     const lignesToInsert = lignes.map((l: { prixUnitaire: any; reduction: number; quantite: any; nom: any; description: any; image: any; }) => {
+
+//       const prix = l.prixUnitaire;
+//       const reduction = l.reduction || 0;
+//       const quantite = l.quantite;
+
+//       // 🔥 calcul montant
+//       const montant =
+//         quantite * prix * (1 - reduction / 100);
+
+//       return {
+//         factureId,
+//         nom: l.nom,
+//         description: l.description,
+//         image: l.image,
+//         prixUnitaire: prix,
+//         quantite,
+//         reduction,
+//         montant,
+//       };
+//     });
+
+//     // 🔹 INSERT NOUVELLES LIGNES
+//     if (lignesToInsert.length > 0) {
+//       await tx.insert(ligneProduitsTable).values(lignesToInsert);
+//     }
+
+//     return {
+//       success: true,
+//       facture: updatedFacture[0],
+//     };
+//   });
+// }
+
+
+
+
+
+
+export async function getAllFactures(status?: string) {
   try {
-    const factures = await db.select().from(facturesTable);
-    console.log('✅ Retrieved all factures');
+     
+    let query
+    // 🔹 Si un status est fourni, on filtre
+    if (status) {
+      query = await db.select().from(facturesTable).where(eq(facturesTable.status, status));
+    }else{
+      query =  await db.select().from(facturesTable);
+    }
+
+    const factures = query;
+
+    console.log('✅ Retrieved factures', status ? `with status=${status}` : '');
     return factures;
+
   } catch (error) {
     console.error('❌ Error fetching factures:', error);
     throw error;
@@ -183,6 +300,8 @@ export async function getFactureById(id: number) {
     throw error;
   }
 }
+
+
 
 
 

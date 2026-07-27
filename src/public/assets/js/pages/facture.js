@@ -23,6 +23,7 @@ const InvoiceEditor = (function () {
   let editId = null;
   let lines = [];
   const settings = TT.getSettings();
+  let createdAt;
 
   const $ = id => document.getElementById(id);
 
@@ -292,13 +293,15 @@ async function autofillClient() {
       montant: Math.round(totals.ttc),
       lines: TT.clone(lines),
       status: 'sent',
-      updatedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
+      // createdAt: new Date().toISOString(),
     };
   }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// function toTimestamp(dateString) {
+//   return dateString ? new Date(dateString).getTime() : null;
+// } tosuppr
   async function buildBackendPayload(formData) {
     let clientId = null;
     try {
@@ -309,7 +312,9 @@ async function autofillClient() {
       console.error('Impossible de résoudre le client pour le backend:', error);
     }
 
-    return {
+    // modification
+    if(editId){
+      return {
     facture: {
       objet: formData.objet || null,
 
@@ -326,17 +331,17 @@ async function autofillClient() {
       contact: formData.contact,
 
       // 🔥 timestamps (important pour ton schema)
-      // dateEcheance: formData.echeance
-      //   ? new Date(formData.echeance).getTime()
-      //   : null,
+      // updatedAt: new Date(),
 
-      dateDePaiement: formData.date
-        ? new Date(formData.date).getTime()
-        : null,
+      dateDePaiement: formData.date,
 
       remiseGlobale: Number(formData.remiseGlobale || 0),
 
       condition: formData.conditions,
+      updatedAt : new Date().toISOString(),
+      createdAt : createdAt,
+
+
     },
 
     lignes: lines.map(line => ({
@@ -349,11 +354,54 @@ async function autofillClient() {
       reduction: Number(line.remise) || 0,
     })),
   };
+
+// For create
+    }else{
+      return {
+    facture: {
+      objet: formData.objet || null,
+
+      totalHt: Number(formData.totalHt) || 0,
+      totalTtc: Number(formData.montant) || 0,
+      tva: Number(formData.tva) || 18,
+
+      isProforma: docType === 'proforma',
+
+      client: clientId,
+      devise: formData.devise || 'XOF',
+
+      suiviPar: formData.suiviPar,
+      contact: formData.contact,
+
+
+      dateDePaiement: formData.date,
+
+      remiseGlobale: Number(formData.remiseGlobale || 0),
+
+      condition: formData.conditions,
+
+      createdAt : new Date().toISOString()
+    },
+
+    lignes: lines.map(line => ({
+      nom: line.ref || line.desc || 'Produit',
+      description: line.desc || line.ref || 'Produit',
+      image: line.image || null,
+
+      prixUnitaire: Number(line.pu) || 0,
+      quantite: Number(line.qty) || 1,
+      reduction: Number(line.remise) || 0,
+    })),
+  };
+    }
+
+    
   }
 
   async function postToBackend(formData) {
    try {
     const payload = await buildBackendPayload(formData);
+    console.log(payload)
     const response = await AA.createFacture(payload);
     console.log(response);
     const facture = response.facture;
@@ -493,7 +541,7 @@ const id = result.id
     editId = id;
     setType(doc.type || 'facture');
     $('fNumero').value = doc.reference;
-    $('fDate').value = new Date(doc.createdAt);
+    $('fDate').value =  doc.dateDePaiement;
    $('fSuiviPar').value = doc.suiviPar || '';
     $('fContact').value = doc.contact || '';
     $('fClient').value = client.nom || '';
@@ -506,6 +554,7 @@ const id = result.id
     $('fDevise').value = doc.devise || 'FCFA';
     $('fConditions').value = doc.condition;
     $('editorTitle').textContent = 'Modifier — ' + doc.reference;
+    createdAt = doc.createdAt;
 
 
 

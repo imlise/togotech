@@ -19,8 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-function renderTrash() {
-  const trash = TT.getTrash();
+async function clientName(id){
+  const client = await AA.getClient(id);
+  return client.nom;
+}
+
+async function renderTrash() {
+  const trash = await AA.getFactures('deleted');
   const tbody = document.getElementById('trashBody');
   const empty = document.getElementById('trashEmpty');
 
@@ -31,11 +36,16 @@ function renderTrash() {
   }
   empty.hidden = true;
 
-  tbody.innerHTML = trash.map(d => `
+  async function buildRows(data) {
+  const rows = await Promise.all(
+    data.map(async (d) => {
+      const client = await clientName(d.client);
+
+      return `
     <tr>
-      <td class="td-mono">${d.numero}</td>
-      <td><span class="badge badge--deleted">${d.type}</span></td>
-      <td>${d.client}</td>
+      <td class="td-mono">${d.reference}</td>
+      <td><span class="badge badge--deleted">${d.isProforma ? 'Proforma' : 'Facture'}</span></td>
+      <td>${client}</td>
       <td class="text-secondary">${TT.formatDateTime(d.deletedAt)}</td>
       <td>
         <div class="row-actions" style="opacity:1">
@@ -44,21 +54,35 @@ function renderTrash() {
         </div>
       </td>
     </tr>
-  `).join('');
+  `;
+    })
+  );
+
+  return rows.join('');
+}
+
+
+tbody.innerHTML = await buildRows(trash);
+
 
   tbody.querySelectorAll('[data-restore]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      TT.restoreFromTrash(btn.dataset.restore);
+    btn.addEventListener('click', async () => {
+      // TT.restoreFromTrash(btn.dataset.restore);
+      const id = btn.dataset.restore;
+      const data = {"facture":{
+        "status":""
+      }}
+      await AA.updateFacture(id, data);
       Toast.success('Document restauré.');
       renderTrash();
     });
   });
 
   tbody.querySelectorAll('[data-purge]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      TTComponents.confirm({ title: 'Suppression définitive', message: 'Ce document ne pourra pas être récupéré.', danger: true }).then(ok => {
+    btn.addEventListener('click', async () => {
+      TTComponents.confirm({ title: 'Suppression définitive', message: 'Ce document ne pourra pas être récupéré.', danger: true }).then( async ok => {
         if (!ok) return;
-        TT.saveTrash(TT.getTrash().filter(d => d.id !== btn.dataset.purge));
+        await AA.deleteFacture(btn.dataset.purge);
         Toast.success('Document supprimé définitivement.');
         renderTrash();
       });

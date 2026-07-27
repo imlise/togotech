@@ -61,7 +61,7 @@ try {
     ...doc,
 
     numero : doc.reference,
-    date : doc.createdAt,
+    date : doc.dateDePaiement,
     // contact : doc.contact,
     client : client.nom,
     email:client.email,
@@ -115,7 +115,7 @@ const typeLabel = doc.isProforma ? 'Proforma' : 'Facture';
             <div class="doc-meta-list">
               <div class="doc-meta-item"><span class="doc-meta-label">Client</span><span class="doc-meta-value">${client.nom}</span></div>
               <div class="doc-meta-item"><span class="doc-meta-label">Montant TTC</span><span class="doc-meta-value text-mono">${TT.formatCurrency(doc.totalHt, doc.devise)}</span></div>
-              <div class="doc-meta-item"><span class="doc-meta-label">Date d'émission</span><span class="doc-meta-value">${TT.formatDate(doc.createdAt)}</span></div>
+              <div class="doc-meta-item"><span class="doc-meta-label">Date d'émission</span><span class="doc-meta-value">${TT.formatDate(doc.dateDePaiement)}</span></div>
                             <div class="doc-meta-item"><span class="doc-meta-label">Dossier suivi par</span><span class="doc-meta-value">${doc.suiviPar || '—'}</span></div>
               <div class="doc-meta-item"><span class="doc-meta-label">Contact</span><span class="doc-meta-value">${doc.contact || '—'}</span></div>
               <div class="doc-meta-item"><span class="doc-meta-label">TVA</span><span class="doc-meta-value">${doc.tva || 18}%</span></div>
@@ -129,11 +129,11 @@ const typeLabel = doc.isProforma ? 'Proforma' : 'Facture';
             <div class="doc-timeline">
               <div class="doc-timeline__item">
                 <div class="text-body-sm"><strong>Document créé</strong></div>
-                <div class="text-caption">${TT.formatDateTime(doc.createdAt || doc.date)}</div>
+                <div class="text-caption">${TT.formatDateTime(doc.createdAt)}</div>
               </div>
               <div class="doc-timeline__item">
                 <div class="text-body-sm"><strong>Dernière modification</strong></div>
-                <div class="text-caption">${TT.formatDateTime(doc.updatedAt || doc.date)}</div>
+                <div class="text-caption">${TT.formatDateTime(doc.updatedAt || "Aucune modification")}</div>
               </div>
             </div>
           </div>
