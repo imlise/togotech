@@ -11,6 +11,7 @@ import {
   getRevenueStats,
   getLigneProduitsByFactureId,
   getNextFactureReference,
+  emptyTrash,
 } from "../services/factures";
 
 const router = express.Router();
@@ -188,6 +189,32 @@ router.put("/:id", async (req, res) => {
 });
 
 
+/**
+ * DELETE /api/factures/cleanup
+ */
+router.delete('/cleanup', async (req, res) => {
+  try {
+    const result = await emptyTrash();
+
+    res.json({
+      success: true,
+      message: 'Corbeille vidée avec succès',
+      data: result
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur cleanup:', error);
+
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors du nettoyage des factures',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+});
+
+
+
 // DELETE /api/factures/:id
 router.delete("/:id", async (req, res) => {
   try {
@@ -209,6 +236,10 @@ router.delete("/:id", async (req, res) => {
     });
   }
 });
+
+
+
+
 
 
 

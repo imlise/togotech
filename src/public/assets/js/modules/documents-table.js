@@ -374,11 +374,9 @@ window.FacturesActions = {
 
 
       try {
-        const data = {"facture":{
-        "status":"deleted"
-      }}
+       
 
-        await AA.updateFacture(id,data);
+        await AA.factureToBasket(id);
 
         
           DocumentsTable.refresh();

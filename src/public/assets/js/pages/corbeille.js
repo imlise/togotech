@@ -1,5 +1,6 @@
 'use strict';
 
+let rowsCount ;
 document.addEventListener('DOMContentLoaded', () => {
   TTLayout.initShell({ page: 'corbeille', title: 'Corbeille' });
   document.getElementById('app-header').innerHTML = TTLayout.renderHeader({
@@ -9,10 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTrash();
 
   document.getElementById('emptyTrash')?.addEventListener('click', () => {
-    if (!TT.getTrash().length) { Toast.info('Corbeille déjà vide.'); return; }
-    TTComponents.confirm({ title: 'Vider la corbeille', message: 'Supprimer définitivement tous les documents ?', danger: true }).then(ok => {
+    if (!rowsCount) { Toast.info('Corbeille déjà vide.'); return; }
+    TTComponents.confirm({ title: 'Vider la corbeille', message: 'Supprimer définitivement tous les documents ?', danger: true }).then(async ok => {
       if (!ok) return;
-      TT.saveTrash([]);
+      await AA.emptyTrash();
       Toast.success('Corbeille vidée.');
       renderTrash();
     });
@@ -57,6 +58,8 @@ async function renderTrash() {
   `;
     })
   );
+
+  rowsCount = rows.length;
 
   return rows.join('');
 }

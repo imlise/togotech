@@ -339,6 +339,28 @@ export async function deleteFacture(id: number) {
 
 
 
+export async function emptyTrash() {
+  try {
+    const result = await db
+      .delete(facturesTable)
+      .where(eq(facturesTable.status, 'deleted'));
+
+    console.log('✅ Factures supprimées (status = deleted)');
+    
+    return {
+      success: true,
+      message: 'Toutes les factures supprimées',
+      result
+    };
+  } catch (error) {
+    console.error('❌ Erreur suppression factures:', error);
+    throw error;
+  }
+}
+
+
+
+
 export async function getFacturesStats() {
   try {
     const now = new Date();

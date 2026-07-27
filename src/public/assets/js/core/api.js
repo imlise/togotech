@@ -124,8 +124,26 @@ async function getFactures(status) {
     });
   }
 
+  async function factureToBasket(id) {
+    const data = {"facture":{
+        "status":"deleted"
+      }};
+    return request(`/factures/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+
+
   async function deleteFacture(id) {
     return request(`/factures/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async function emptyTrash() {
+    return request(`/factures/cleanup`, {
       method: 'DELETE'
     });
   }
@@ -157,6 +175,8 @@ async function getFactures(status) {
     updateFacture,
     deleteFacture,
     factureToDraft,
+    factureToBasket,
+    emptyTrash,
 
     getProduits
   };
