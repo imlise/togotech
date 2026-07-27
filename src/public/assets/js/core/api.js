@@ -114,6 +114,16 @@ async function getFactures(status) {
     });
   }
 
+  async function factureToDraft(id) {
+    const data = {"facture":{
+        "status":"draft"
+      }};
+    return request(`/factures/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
   async function deleteFacture(id) {
     return request(`/factures/${id}`, {
       method: 'DELETE'
@@ -146,6 +156,7 @@ async function getFactures(status) {
     createFacture,
     updateFacture,
     deleteFacture,
+    factureToDraft,
 
     getProduits
   };

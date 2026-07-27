@@ -59,26 +59,26 @@ const InvoiceEditor = (function () {
     $('fTva').value = settings.tva || 18;
   }
 
-async function populateClients() {
+  async function populateClients() {
 
-  const dl = $('clientList');
+    const dl = $('clientList');
 
-  try {
-    const clients = await AA.getClients();
-    dl.innerHTML = clients
-      .map(c => `<option value="${c.nom}">`)
-      .join('');
-  } catch (err) {
-    console.error('Erreur chargement clients', err);
+    try {
+      const clients = await AA.getClients();
+      dl.innerHTML = clients
+        .map(c => `<option value="${c.nom}">`)
+        .join('');
+    } catch (err) {
+      console.error('Erreur chargement clients', err);
+    }
   }
-}
 
   function bindEvents() {
     document.querySelectorAll('.segmented__btn').forEach(btn => {
       btn.addEventListener('click', () => setType(btn.dataset.type));
     });
 
-    ['fNumero','fDate','fSuiviPar','fContact','fObjet','fClient','fEmail','fTelephone','fAdresse','fTva','fRemise','fConditions','fDevise'].forEach(id => {
+    ['fNumero', 'fDate', 'fSuiviPar', 'fContact', 'fObjet', 'fClient', 'fEmail', 'fTelephone', 'fAdresse', 'fTva', 'fRemise', 'fConditions', 'fDevise'].forEach(id => {
       $(id)?.addEventListener('input', syncAll);
       $(id)?.addEventListener('change', syncAll);
     });
@@ -132,34 +132,34 @@ async function populateClients() {
       .replace(/60%.*?livraison/gi, m => `<span class="hl-red">${m}</span>`);
   }
 
-async function autofillClient() {
+  async function autofillClient() {
 
-  const name = $('fClient').value;
+    const name = $('fClient').value;
 
-  try {
+    try {
 
-    const clients = await AA.getClients();
-    const client = clients.find(c => c.nom === name);
+      const clients = await AA.getClients();
+      const client = clients.find(c => c.nom === name);
 
-    if (client) {
+      if (client) {
 
-      $('fEmail').value = client.email || '';
+        $('fEmail').value = client.email || '';
 
-      $('fTelephone').value = client.phone || '';
+        $('fTelephone').value = client.phone || '';
 
-      $('fAdresse').value = client.adresse || '';
+        $('fAdresse').value = client.adresse || '';
 
-      syncAll();
+        syncAll();
+
+      }
+
+    } catch (error) {
+
+      console.error('Erreur récupération clients:', error);
 
     }
 
-  } catch (error) {
-
-    console.error('Erreur récupération clients:', error);
-
   }
-
-}
 
   function autoGrow(el) {
     el.style.height = 'auto';
@@ -289,7 +289,7 @@ async function autofillClient() {
       tva: parseFloat($('fTva').value) || 0,
       remise: parseFloat($('fRemise').value) || 0,
       conditions: $('fConditions').value,
-      totalHt:Math.round(totals.ht),
+      totalHt: Math.round(totals.ht),
       montant: Math.round(totals.ttc),
       lines: TT.clone(lines),
       status: 'sent',
@@ -298,10 +298,10 @@ async function autofillClient() {
   }
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// function toTimestamp(dateString) {
-//   return dateString ? new Date(dateString).getTime() : null;
-// } tosuppr
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // function toTimestamp(dateString) {
+  //   return dateString ? new Date(dateString).getTime() : null;
+  // } tosuppr
   async function buildBackendPayload(formData) {
     let clientId = null;
     try {
@@ -313,136 +313,138 @@ async function autofillClient() {
     }
 
     // modification
-    if(editId){
+    if (editId) {
       return {
-    facture: {
-      objet: formData.objet || null,
+        facture: {
+          objet: formData.objet || null,
 
-      totalHt: Number(formData.totalHt) || 0,
-      totalTtc: Number(formData.montant) || 0,
-      tva: Number(formData.tva) || 18,
+          totalHt: Number(formData.totalHt) || 0,
+          totalTtc: Number(formData.montant) || 0,
+          tva: Number(formData.tva) || 18,
 
-      isProforma: docType === 'proforma',
+          isProforma: docType === 'proforma',
 
-      client: clientId,
-      devise: formData.devise || 'XOF',
+          client: clientId,
+          devise: formData.devise || 'XOF',
 
-      suiviPar: formData.suiviPar,
-      contact: formData.contact,
+          suiviPar: formData.suiviPar,
+          contact: formData.contact,
 
-      // 🔥 timestamps (important pour ton schema)
-      // updatedAt: new Date(),
+          // 🔥 timestamps (important pour ton schema)
+          // updatedAt: new Date(),
 
-      dateDePaiement: formData.date,
+          dateDePaiement: formData.date,
 
-      remiseGlobale: Number(formData.remiseGlobale || 0),
+          remiseGlobale: Number(formData.remiseGlobale || 0),
 
-      condition: formData.conditions,
-      updatedAt : new Date().toISOString(),
-      createdAt : createdAt,
+          condition: formData.conditions,
+          updatedAt: new Date().toISOString(),
+          createdAt: createdAt,
 
 
-    },
+        },
 
-    lignes: lines.map(line => ({
-      nom: line.ref || line.desc || 'Produit',
-      description: line.desc || line.ref || 'Produit',
-      image: line.image || null,
+        lignes: lines.map(line => ({
+          nom: line.ref || line.desc || 'Produit',
+          description: line.desc || line.ref || 'Produit',
+          image: line.image || null,
 
-      prixUnitaire: Number(line.pu) || 0,
-      quantite: Number(line.qty) || 1,
-      reduction: Number(line.remise) || 0,
-    })),
-  };
+          prixUnitaire: Number(line.pu) || 0,
+          quantite: Number(line.qty) || 1,
+          reduction: Number(line.remise) || 0,
+        })),
+      };
 
-// For create
-    }else{
+      // For create
+    } else {
       return {
-    facture: {
-      objet: formData.objet || null,
+        facture: {
+          objet: formData.objet || null,
 
-      totalHt: Number(formData.totalHt) || 0,
-      totalTtc: Number(formData.montant) || 0,
-      tva: Number(formData.tva) || 18,
+          totalHt: Number(formData.totalHt) || 0,
+          totalTtc: Number(formData.montant) || 0,
+          tva: Number(formData.tva) || 18,
 
-      isProforma: docType === 'proforma',
+          isProforma: docType === 'proforma',
 
-      client: clientId,
-      devise: formData.devise || 'XOF',
+          client: clientId,
+          devise: formData.devise || 'XOF',
 
-      suiviPar: formData.suiviPar,
-      contact: formData.contact,
+          suiviPar: formData.suiviPar,
+          contact: formData.contact,
 
 
-      dateDePaiement: formData.date,
+          dateDePaiement: formData.date,
 
-      remiseGlobale: Number(formData.remiseGlobale || 0),
+          remiseGlobale: Number(formData.remiseGlobale || 0),
 
-      condition: formData.conditions,
+          condition: formData.conditions,
 
-      createdAt : new Date().toISOString()
-    },
+          createdAt: new Date().toISOString(),
 
-    lignes: lines.map(line => ({
-      nom: line.ref || line.desc || 'Produit',
-      description: line.desc || line.ref || 'Produit',
-      image: line.image || null,
+          status: formData.status,
+        },
 
-      prixUnitaire: Number(line.pu) || 0,
-      quantite: Number(line.qty) || 1,
-      reduction: Number(line.remise) || 0,
-    })),
-  };
+        lignes: lines.map(line => ({
+          nom: line.ref || line.desc || 'Produit',
+          description: line.desc || line.ref || 'Produit',
+          image: line.image || null,
+
+          prixUnitaire: Number(line.pu) || 0,
+          quantite: Number(line.qty) || 1,
+          reduction: Number(line.remise) || 0,
+        })),
+      };
     }
 
-    
+
   }
 
   async function postToBackend(formData) {
-   try {
-    const payload = await buildBackendPayload(formData);
-    console.log(payload)
-    const response = await AA.createFacture(payload);
-    console.log(response);
-    const facture = response.facture;
-   
-    if (!response.success) {
-      throw new Error(response.message || 'Erreur API facture');
+    try {
+      const payload = await buildBackendPayload(formData);
+      console.log(payload)
+      const response = await AA.createFacture(payload);
+      console.log(response);
+      const facture = response.facture;
+
+      if (!response.success) {
+        throw new Error(response.message || 'Erreur API facture');
+      }
+
+      return facture;
     }
-
-    return facture;
-}
-   catch (error) {
-    console.error("Erreur création facture :", error);
-    throw error;
-  }
-  }
-
-async function editToBackend(id, formData) {
-  try {
-    const payload = await buildBackendPayload(formData);
-
-    const response = await AA.updateFacture(id, payload);
-
-    console.log("Réponse update API :", response);
-
-    if (!response.success) {
-      throw new Error(response.message || 'Erreur API facture');
+    catch (error) {
+      console.error("Erreur création facture :", error);
+      throw error;
     }
-
-    const facture = response.facture;
-
-    return facture;
-
-  } catch (error) {
-    console.error("Erreur modification facture :", error);
-    throw error;
   }
-}
+
+  async function editToBackend(id, formData) {
+    try {
+      const payload = await buildBackendPayload(formData);
+
+      const response = await AA.updateFacture(id, payload);
+
+      console.log("Réponse update API :", response);
+
+      if (!response.success) {
+        throw new Error(response.message || 'Erreur API facture');
+      }
+
+      const facture = response.facture;
+
+      return facture;
+
+    } catch (error) {
+      console.error("Erreur modification facture :", error);
+      throw error;
+    }
+  }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   async function saveDocument(status) {
-    let result;   
+    let result;
 
 
     if (!$('fClient').value || !$('fObjet').value) {
@@ -452,50 +454,70 @@ async function editToBackend(id, formData) {
 
     const data = getFormData();
     console.log(data);
-    data.status = status;
+    // data.status = status;
 
     if (status === 'draft') {
-      const drafts = TT.getDrafts().filter(d => d.id !== data.id);
-      drafts.unshift(data);
-      TT.saveDrafts(drafts);
-      Toast.success('Brouillon enregistré.');
-      TT.addNotification('draft', `Brouillon ${data.numero} enregistré.`);
-      return;
+
+      if (data.status === 'draft') {
+
+        Toast.info('Déjà un brouillon.');
+        return;
+
+      } else {
+        if (editId) {
+
+
+          await AA.factureToDraft(data.id);
+          Toast.success('Brouillon enregistré.');
+          TT.addNotification(
+            'draft',
+            `Brouillon ${data.numero} enregistré.`
+          );
+
+        } else {
+          data.status = status;
+          result = await postToBackend(data);
+          // console.info('Facture envoyée au backend:', result);
+          console.info('Brouillon envoyée au backend');
+          Toast.success('Brouillon enregistré.');
+
+        }
+      }
     }
 
-    let docs = TT.getDocs();
+ ///////////////////////////////////    Modification de facture   /////////////////////////////////////////////////////////////////////////////////////////
     if (editId) {
-      result = await editToBackend(editId,data);
+      result = await editToBackend(editId, data);
       console.info('Facture editée avec  succēs:', result);
-      docs = docs.map(d => d.id === editId ? { ...d, ...data, createdAt: d.createdAt } : d);
+
     } else {
       docs.unshift(data);
       TT.incrementNumero();
     }
-    TT.saveDocs(docs);
-    TT.addNotification('create', `${docType === 'proforma' ? 'Proforma' : 'Facture'} ${data.numero} enregistrée.`);
-    Toast.success('Document enregistré avec succès.');
+    
 
-///////////////////////////////////    Enregistrement de facture   /////////////////////////////////////////////////////////////////////////////////////////
-  
-if (status === 'sent') {
-  try {
-    result = await postToBackend(data);
+    ///////////////////////////////////    Enregistrement de facture   /////////////////////////////////////////////////////////////////////////////////////////
 
-    // console.info('Facture envoyée au backend:', result);
-    console.info('Facture envoyée au backend');
+    if (status === 'sent') {
+      try {
+        result = await postToBackend(data);
 
-  } catch (error) {
-    console.error('Erreur d’envoi parallèle vers le backend:', error);
-  }
-  
-}
-const id = result.id
+        // console.info('Facture envoyée au backend:', result);
+          Toast.success('Brouillon enregistré.');
+        console.info('Facture enregistré avec succès.');
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  if(id){
-    setTimeout(() => { window.location.href = `document.html?id=${id}`; }, 800);
-  }
+      } catch (error) {
+        console.error('Erreur d’envoi parallèle vers le backend:', error);
+      }
+
+    }
+    const id = result.id
+    console.log(data);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    if (id) {
+      setTimeout(() => { window.location.href = `document.html?id=${id}`; }, 800);
+    }
   }
 
   function duplicateDoc() {
@@ -541,8 +563,8 @@ const id = result.id
     editId = id;
     setType(doc.type || 'facture');
     $('fNumero').value = doc.reference;
-    $('fDate').value =  doc.dateDePaiement;
-   $('fSuiviPar').value = doc.suiviPar || '';
+    $('fDate').value = doc.dateDePaiement;
+    $('fSuiviPar').value = doc.suiviPar || '';
     $('fContact').value = doc.contact || '';
     $('fClient').value = client.nom || '';
     $('fEmail').value = client.email || '';
@@ -558,15 +580,15 @@ const id = result.id
 
 
 
-     lines = fLines.map(l => ({
-      id:TT.genId(),
-  ref: l.nom,
-  desc: l.description || '',
-  qty: l.quantite,
-  pu: l.prixUnitaire,
-  remise: l.reduction,
-  image: l.image
-}));
+    lines = fLines.map(l => ({
+      id: TT.genId(),
+      ref: l.nom,
+      desc: l.description || '',
+      qty: l.quantite,
+      pu: l.prixUnitaire,
+      remise: l.reduction,
+      image: l.image
+    }));
 
     renderLines();
     syncAll();
@@ -592,7 +614,7 @@ const id = result.id
     applyZoom(zoom);
     $('zoomLevel').textContent = Math.round(zoom * 100) + '%';
   }
-   // On génère le PDF/impression à partir d'une copie hors écran à échelle
+  // On génère le PDF/impression à partir d'une copie hors écran à échelle
   // 1 du même template (jamais depuis #pdfPage affiché, qui peut être
   // zoomé/dézoomé par l'utilisateur) — exactement le même mécanisme que
   // document.js: getExportNode(), qui donnait un meilleur résultat que la
@@ -661,7 +683,7 @@ const id = result.id
     }
   }
 
- // Imprime le même PDF que celui produit par "Télécharger PDF" (voir
+  // Imprime le même PDF que celui produit par "Télécharger PDF" (voir
   // pdf-export.js: print()), plutôt que le DOM live via window.print() +
   // CSS @media print. Comme le PDF est capturé à la hauteur réelle du
   // contenu, ça élimine l'espace blanc résiduel en bas de page qu'un
@@ -687,7 +709,7 @@ const id = result.id
     // bloc @media print de facture.css pour l'explication complète.
     InvoiceTemplate.fitToPage($('pdfPage'), 265);
   }
-  
+
   function restoreAfterPrint() {
     const preview = document.querySelector('.invoice-preview');
     const scroll = $('previewScroll');

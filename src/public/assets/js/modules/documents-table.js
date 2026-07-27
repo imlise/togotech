@@ -16,7 +16,7 @@ window.DocumentsTable = (function () {
       checkAllId:    'checkAll',
       bulkBarId:     'bulkBar',
       emptyId:       'tableEmpty',
-      getData:       () => TT.getDocs(),
+      // getData:       () => TT.getDocs(),
       // getData:       () => AA.getFactures(),
       onDelete:      (doc) => TT.moveToTrash(doc),
       ...options,
@@ -204,32 +204,32 @@ window.DocumentsTable = (function () {
     addBtn('›', state.page + 1, state.page === totalPages);
   }
 
-  function handleRowClick(e) {
-    const chk = e.target.closest('.row-check');
-    if (chk) {
-      chk.checked ? state.selected.add(chk.dataset.id) : state.selected.delete(chk.dataset.id);
-      render();
-      updateBulkBar();
-      return;
-    }
+  // function handleRowClick(e) {
+  //   const chk = e.target.closest('.row-check');
+  //   if (chk) {
+  //     chk.checked ? state.selected.add(chk.dataset.id) : state.selected.delete(chk.dataset.id);
+  //     render();
+  //     updateBulkBar();
+  //     return;
+  //   }
 
-    const btn = e.target.closest('[data-action]');
-    if (!btn) return;
-    const doc = state.all.find(d => d.id === btn.dataset.id);
-    if (!doc) return;
+  //   const btn = e.target.closest('[data-action]');
+  //   if (!btn) return;
+  //   const doc = state.all.find(d => d.id === btn.dataset.id);
+  //   if (!doc) return;
 
-    if (btn.dataset.action === 'delete') {
-      TTComponents.confirm({ title: 'Supprimer', message: `Déplacer ${doc.numero} vers la corbeille ?`, danger: true }).then(ok => {
-        if (!ok) return;
-        config.onDelete(doc);
-        state.all = config.getData();
-        applyFilter();
-        Toast.success(`${doc.numero} déplacé vers la corbeille.`);
-      });
-    } else if (btn.dataset.action === 'pdf') {
-      downloadDocPdf(doc, btn);
-    }
-  }
+  //   if (btn.dataset.action === 'delete') {
+  //     TTComponents.confirm({ title: 'Supprimer', message: `Déplacer ${doc.numero} vers la corbeille ?`, danger: true }).then(ok => {
+  //       if (!ok) return;
+  //       config.onDelete(doc);
+  //       state.all = config.getData();
+  //       applyFilter();
+  //       Toast.success(`${doc.numero} déplacé vers la corbeille.`);
+  //     });
+  //   } else if (btn.dataset.action === 'pdf') {
+  //     downloadDocPdf(doc, btn);
+  //   }
+  // }
 
   async function downloadDocPdf(doc, btn) {
     if (!window.InvoiceTemplate || !window.PdfExport || !PdfExport.librariesReady()) {
@@ -365,7 +365,7 @@ window.FacturesActions = {
 
     TTComponents.confirm({
       title: 'Supprimer',
-      message: `Supprimer la facture ${numero} ?`,
+      message: `Déplacer ${numero} vers la corbeille ?`,
       danger: true
 
     }).then(async ok => {
@@ -374,14 +374,17 @@ window.FacturesActions = {
 
 
       try {
+        const data = {"facture":{
+        "status":"deleted"
+      }}
 
-        await AA.deleteFacture(id);
+        await AA.updateFacture(id,data);
 
         
           DocumentsTable.refresh();
           window.location.reload();
 
-        Toast.success(`${numero} supprimé.`);
+        Toast.success(`${numero} déplacé vers la corbeille.`);
 
 
       } catch (error) {

@@ -39,8 +39,16 @@ async function loadData() {
 
 async function fetchFactures() {
   const response = await fetch(`${API_BASE}/factures`);
-  if (!response.ok) throw new Error('Erreur lors du chargement des factures.');
-  return response.json();
+
+  if (!response.ok) {
+    throw new Error('Erreur lors du chargement des factures.');
+  }
+
+  const factures = await response.json();
+  
+  return factures.filter(
+    facture => facture.status !== 'draft' && facture.status !== 'deleted'
+  );
 }
 
 async function fetchClients() {
