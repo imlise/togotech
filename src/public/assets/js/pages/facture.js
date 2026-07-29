@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ],
     }).replace(/^<header class="app-header">|<\/header>$/g, '');
   }
+  
 
   InvoiceEditor.init();
 });
@@ -33,6 +34,7 @@ const InvoiceEditor = (function () {
     docType = params.get('type') || (params.get('edit') ? null : 'facture') || 'facture';
 
     if (params.get('type') === 'proforma') setType('proforma');
+
 
     loadSettings();
     populateClients();
@@ -122,6 +124,18 @@ const InvoiceEditor = (function () {
     if (!editId) $('fNumero').value = await AA.nextNumero(type);
     const label = type === 'proforma' ? 'Facture Proforma' : 'Facture';
     if ($('pdfDocTypeLabel')) $('pdfDocTypeLabel').textContent = label;
+
+    if(docType === 'proforma'){
+      const field = document.getElementById('fPaye').closest('.field');
+  if (field) {
+    field.style.display = 'none';
+  }
+    }else{
+       const field = document.getElementById('fPaye').closest('.field');
+  if (field) {
+    field.style.display = '';
+  }
+    }
     syncAll();
   }
 
@@ -132,34 +146,28 @@ const InvoiceEditor = (function () {
       .replace(/60%.*?livraison/gi, m => `<span class="hl-red">${m}</span>`);
   }
 
-  async function autofillClient() {
+ async function autofillClient() {
+  const name = $('fClient').value;
 
-    const name = $('fClient').value;
+  try {
+    const clients = await AA.getClients();
+    const client = clients.find(c => c.nom === name);
 
-    try {
-
-      const clients = await AA.getClients();
-      const client = clients.find(c => c.nom === name);
-
-      if (client) {
-
-        $('fEmail').value = client.email || '';
-
-        $('fTelephone').value = client.phone || '';
-
-        $('fAdresse').value = client.adresse || '';
-
-        syncAll();
-
-      }
-
-    } catch (error) {
-
-      console.error('Erreur récupération clients:', error);
-
+    if (client) {
+      $('fEmail').value = client.email || '';
+      $('fTelephone').value = client.phone || '';
+      $('fAdresse').value = client.adresse || '';
+      syncAll();
+      return true; // ← Client trouvé
     }
 
+    return false; // ← Client NOT trouvé (nouveau client)
+
+  } catch (error) {
+    console.error('Erreur récupération clients:', error);
+    return false;
   }
+}
 
   function autoGrow(el) {
     el.style.height = 'auto';
@@ -271,6 +279,7 @@ const InvoiceEditor = (function () {
     if (dupBtn) dupBtn.hidden = !editId;
   }
 
+
   function getFormData() {
     const totals = calcTotals();
     return {
@@ -302,6 +311,17 @@ const InvoiceEditor = (function () {
   // function toTimestamp(dateString) {
   //   return dateString ? new Date(dateString).getTime() : null;
   // } tosuppr
+let etat ;
+document.getElementById('fPaye').addEventListener('change', (e) => {
+  const estPaye = e.target.value === "true";
+
+  console.log("Nouvelle valeur :", estPaye);
+
+  etat = estPaye ? "paid" : "sent";
+
+  console.log("Etat facture :", etat);
+});
+
   async function buildBackendPayload(formData) {
     let clientId = null;
     try {
@@ -329,6 +349,8 @@ const InvoiceEditor = (function () {
 
           suiviPar: formData.suiviPar,
           contact: formData.contact,
+
+          etat: estPaye ? "paid":"sent",
 
           // 🔥 timestamps (important pour ton schema)
           // updatedAt: new Date(),
@@ -372,6 +394,8 @@ const InvoiceEditor = (function () {
 
           suiviPar: formData.suiviPar,
           contact: formData.contact,
+
+          etat: etat,
 
 
           dateDePaiement: formData.date,
@@ -445,11 +469,27 @@ const InvoiceEditor = (function () {
 
   async function saveDocument(status) {
     let result;
+    const clientExists = await autofillClient();
 
 
     if (!$('fClient').value || !$('fObjet').value) {
       Toast.error('Veuillez renseigner le client et l\'objet.');
       return;
+    }
+
+    if (!clientExists){
+     const data = {
+      "nom": $('fClient').value,
+      "email": $('fEmail').value,
+      "phone": $('fTelephone').value,
+      "adresse": $('fAdresse').value,
+     };
+    try{const clients = await AA.createClient(data);
+      console.log("client crée : ", clients)
+    }
+    catch(error){
+      console.log("Erreur de creation client", error);
+    }
     }
 
     const data = getFormData();
@@ -467,8 +507,8 @@ const InvoiceEditor = (function () {
         if (editId) {
 
 
-          await AA.factureToDraft(data.id);
-          Toast.success('Brouillon enregistré.');
+          data.status = status;
+          result = await editToBackend(data);
           TT.addNotification(
             'draft',
             `Brouillon ${data.numero} enregistré.`
@@ -485,16 +525,6 @@ const InvoiceEditor = (function () {
       }
     }
 
- ///////////////////////////////////    Modification de facture   /////////////////////////////////////////////////////////////////////////////////////////
-    if (editId) {
-      result = await editToBackend(editId, data);
-      console.info('Facture editée avec  succēs:', result);
-
-    } else {
-      docs.unshift(data);
-      TT.incrementNumero();
-    }
-    
 
     ///////////////////////////////////    Enregistrement de facture   /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -511,10 +541,21 @@ const InvoiceEditor = (function () {
       }
 
     }
-    const id = result.id
-    console.log(data);
+    const id = result.id;
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+ ///////////////////////////////////    Modification de facture   /////////////////////////////////////////////////////////////////////////////////////////
+    if (editId) {
+      result = await editToBackend(editId, data);
+      console.info('Facture editée avec  succēs:', result);
+      Toast.success('Facture editée avec  succēs');
+
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     if (id) {
       setTimeout(() => { window.location.href = `document.html?id=${id}`; }, 800);
     }

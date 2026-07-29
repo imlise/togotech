@@ -42,6 +42,7 @@ export const facturesTable = sqliteTable("factures", {
 	totalTtc: real("total_ttc").notNull(),
 	// dateEcheance: integer("date_echeance",{ mode: 'timestamp' }),
 	devise: text(),
+	etat: text().default("sent"),
 	// dateDePaiement: integer("date_de_paiement",{ mode: 'timestamp' }),
 	dateDePaiement: text("date_de_paiement"),
 	isProforma: integer("is_proforma",{mode : 'boolean'}).notNull(),

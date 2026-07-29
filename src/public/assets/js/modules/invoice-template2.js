@@ -186,7 +186,7 @@ function linesRowsHtml(doc) {
         ${conditionsBlock}
         <div class="pdf-totals">
           <div class="pdf-total-row"><span>Total H.T.</span><span>${fmt(doc.totalHt)}</span></div>
-          <div class="pdf-total-row"><span>TVA (${totals.tvaRate}%)</span><span>${fmt(doc.tva)}</span></div>
+          <div class="pdf-total-row"><span>TVA (${totals.tvaRate}%)</span><span>${fmt(doc.totalTtc - doc.totalHt)}</span></div>
           <div class="pdf-total-row pdf-total-final"><span>Total TTC</span><span>${fmt(doc.totalTtc)}</span></div>
         </div>
       </div>

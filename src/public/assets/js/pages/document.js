@@ -72,7 +72,7 @@ try {
     lines:lines,
   };
   console.log(client);
-  console.log(doc_send);
+  console.log(doc);
 
 const typeLabel = doc.isProforma ? 'Proforma' : 'Facture';
 
@@ -82,7 +82,7 @@ const typeLabel = doc.isProforma ? 'Proforma' : 'Facture';
         <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2)">
           <h1 class="page-head__title">${doc.reference}</h1>
           <span class="badge badge--${doc.type}">${typeLabel}</span>
-          <span class="badge badge--${doc.status || 'sent'}">${doc.status === 'paid' ? 'Payée' : doc.status === 'draft' ? 'Brouillon' : 'Envoyée'}</span>
+          <span class="badge badge--${doc.status || 'sent'}">${doc.etat === 'paid' ? 'Payée' : ''}</span>
         </div>
         <p class="page-head__sub">${doc.objet} — ${client.nom}</p>
       </div>
