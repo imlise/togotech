@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initGreeting();
 
   try {
-    const [factures, clients] = await Promise.all([fetchFactures(), fetchClients()]);
+    const [factures, clients] = await Promise.all([AA.getFactures(), AA.getClients()]);
     facturesCache = factures;
     clientsCache = clients;
   } catch (err) {
@@ -41,29 +41,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // --- Appels API ---
 
-async function fetchFactures() {
-  const response = await fetch(`${API_BASE}/factures`);
-  if (!response.ok) throw new Error('Erreur lors du chargement des factures.');
-  return response.json();
-}
 
-async function fetchClients() {
-  const response = await fetch(`${API_BASE}/clients`);
-  if (!response.ok) throw new Error('Erreur lors du chargement des clients.');
-  return response.json();
-}
 
-async function fetchFactureStats() {
-  const response = await fetch(`${API_BASE}/factures/stats`);
-  if (!response.ok) throw new Error('Erreur lors du chargement des statistiques.');
-  return response.json(); // { totalDocs, totalProforma, totalFactures, chiffreAffaireMois }
-}
 
-async function fetchRevenueStats(period = '6months') {
-  const response = await fetch(`${API_BASE}/factures/revenue?period=${period}`);
-  if (!response.ok) throw new Error('Erreur lors du chargement du chiffre d\'affaires.');
-  return response.json(); // [{ month: "2026-07", total: 141600 }, ...]
-}
+
+
+
 
 // --- Aides ---
 
@@ -104,7 +87,7 @@ async function renderStats() {
 
   let stats;
   try {
-    const s = await fetchFactureStats();
+    const s = await AA.getFacturesStats();
     stats = {
       factures: s.totalFactures,
       proformas: s.totalProforma,
@@ -224,7 +207,8 @@ async function initChart(period = currentPeriod) {
 
   let stats;
   try {
-    stats = await fetchRevenueStats(period);
+    console.log(AA.getRevenueStats); 
+    stats = await AA.getRevenueStats(period);
   } catch (err) {
     console.error(err);
     Toast.error('Impossible de charger le chiffre d\'affaires.');

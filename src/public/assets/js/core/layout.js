@@ -380,11 +380,19 @@ window.TTLayout = (function () {
     }
   }
 
-  function logout() {
-    sessionStorage.removeItem('tt_mock_auth');
-    sessionStorage.removeItem('tt_user_email');
-    window.location.href = 'index.html';
-  }
+function logout() {
+  // 🔥 Supprimer toutes les données liées à la session
+  sessionStorage.removeItem("tt_token");
+  sessionStorage.removeItem("tt_auth");
+  sessionStorage.removeItem("tt_user");
+  sessionStorage.removeItem("tt_user_email");
+
+  // (optionnel) vider complètement
+  // sessionStorage.clear();
+
+  // 🔄 Redirection vers login
+  window.location.href = 'index.html';
+}
 
   function bindEvents() {
     const root = document.getElementById('app-root');

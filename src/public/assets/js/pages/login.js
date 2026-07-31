@@ -75,6 +75,9 @@
       });
 
       const data = await response.json();
+      if (data.token) {
+  sessionStorage.setItem("tt_token", data.token);
+}
       console.log(data);
 
       if (!response.ok) {
@@ -82,7 +85,9 @@
       }
 
       // Stockage session côté front (optionnel)
-      sessionStorage.setItem("tt_mock_auth", "1");
+Auth.login({
+  email
+});
       sessionStorage.setItem("tt_user_email", email);
 
       // si backend retourne utilisateur

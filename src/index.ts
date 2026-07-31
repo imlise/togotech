@@ -7,6 +7,7 @@ import clientsRouter from "./routes/clients"
 import utilisateursRouter from "./routes/utilisateurs"
 import loginRouter from "./routes/login"
 import ligneProduitsRouter from "./routes/ligneProduit"
+import { authMiddleware } from "./auth/auth";
 
 const app = express();
 app.use(express.json());
@@ -29,12 +30,26 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+
+app.use("/api/login", loginRouter);
+
+
+app.use("/api", authMiddleware);
+
+// routes protégées
 app.use("/api/factures", facturesRouter);
 app.use("/api/produits", produitsRouter);
 app.use("/api/clients", clientsRouter);
 app.use("/api/utilisateurs", utilisateursRouter);
 app.use('/api/ligne-produits', ligneProduitsRouter);
-app.use("/api/login", loginRouter);
+
+
+app.get('/api/test', authMiddleware, (req:any, res:any) => {
+  res.json({
+    message: "OK",
+    user: req.user
+  });
+});
 
 
 const PORT = 3000;

@@ -1,19 +1,68 @@
-/* TOGOTECH GROUP — Auth guard */
-
 'use strict';
 
-(function () {
-  const publicPages = ['index.html', 'forgot-password.html', ''];
-  const current = window.location.pathname.split('/').pop() || 'index.html';
+window.Auth = (function () {
 
-  if (publicPages.includes(current)) return;
+  const CONFIG = {
+    loginPage: '/index',
+    publicPages: [
+      '/index',
+      '/forgot-password',
+      '/'
+    ],
+    storageKey: 'tt_auth'
+  };
 
-  // Allow preview mode when ?preview=1 is present (developer convenience)
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('preview') === '1') return;
 
-  const authed = sessionStorage.getItem('tt_mock_auth');
-  if (!authed) {
-    window.location.href = 'index.html';
+  function isPublicPage() {
+    return CONFIG.publicPages.includes(
+      window.location.pathname
+    );
   }
+
+
+  function isLogged() {
+    return !!sessionStorage.getItem(CONFIG.storageKey);
+  }
+
+
+  function protect() {
+
+    // Page publique → rien à faire
+    if (isPublicPage()) {
+      return;
+    }
+
+
+    // Utilisateur connecté
+    if (isLogged()) {
+      return;
+    }
+
+
+    // Sinon retour login
+    window.location.href = CONFIG.loginPage;
+  }
+
+
+  function login(user) {
+    sessionStorage.setItem(
+      CONFIG.storageKey,
+      JSON.stringify(user)
+    );
+  }
+
+
+  function logout() {
+    sessionStorage.removeItem(CONFIG.storageKey);
+    window.location.href = CONFIG.loginPage;
+  }
+
+
+  return {
+    protect,
+    login,
+    logout,
+    isLogged
+  };
+
 })();

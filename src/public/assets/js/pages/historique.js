@@ -1,6 +1,5 @@
 'use strict';
 
-const API_BASE = 'http://localhost:3000/api';
 
 let clientsCache = [];
 let docsCache = [];
@@ -15,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   DocumentsTable.init({
     getData: () => docsCache,
-    onDelete: (doc) => deleteFacture(doc.id),
+    onDelete: (doc) => AA.deleteFacture(doc.id),
     exportHandlers: bindExportHandlers,
   });
 
@@ -27,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadData() {
   try {
-    const [factures, clients] = await Promise.all([fetchFactures(), fetchClients()]);
+    const [factures, clients] = await Promise.all([AA.getFactures(), AA.getClients()]);
     clientsCache = clients;
     docsCache = factures.map(mapFactureToDoc);
   } catch (err) {
@@ -37,25 +36,8 @@ async function loadData() {
   }
 }
 
-async function fetchFactures() {
-  const response = await fetch(`${API_BASE}/factures`);
 
-  if (!response.ok) {
-    throw new Error('Erreur lors du chargement des factures.');
-  }
 
-  const factures = await response.json();
-  
-  return factures.filter(
-    facture => facture.status !== 'draft' && facture.status !== 'deleted'
-  );
-}
-
-async function fetchClients() {
-  const response = await fetch(`${API_BASE}/clients`);
-  if (!response.ok) throw new Error('Erreur lors du chargement des clients.');
-  return response.json();
-}
 
 // --- Adaptation vers le format attendu par DocumentsTable ---
 
@@ -76,16 +58,7 @@ function mapFactureToDoc(f) {
 
 // --- Suppression ---
 
-async function deleteFacture(id) {
-  try {
-    const response = await fetch(`${API_BASE}/factures/${id}`, { method: 'DELETE' });
-    if (!response.ok) throw new Error();
-    docsCache = docsCache.filter(d => d.id !== id);
-  } catch (err) {
-    console.error(err);
-    Toast.error('Erreur lors de la suppression.');
-  }
-}
+
 
 async function bulkDeleteSelected() {
   const selected = DocumentsTable.getSelected();
@@ -99,7 +72,7 @@ async function bulkDeleteSelected() {
   if (!ok) return;
 
   try {
-    await Promise.all(selected.map(doc => fetch(`${API_BASE}/factures/${doc.id}`, { method: 'DELETE' })));
+    await Promise.all(selected.map(doc => AA.deleteFacture(doc.id)));
     const ids = new Set(selected.map(d => d.id));
     docsCache = docsCache.filter(d => !ids.has(d.id));
     DocumentsTable.refresh();

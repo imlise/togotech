@@ -8,6 +8,17 @@ window.AA = (function () {
   // =========================
   const BASE_URL = '/api'; // adapte selon ton backend
 
+
+
+const token = sessionStorage.getItem("tt_token");
+// console.log(token)
+
+// const response = await fetch("http://localhost:3000/api/test", {
+//   headers: {
+//     "Authorization": `Bearer ${token}`
+//   }
+// });
+
   // =========================
   // 🔹 HELPERS
   // =========================
@@ -16,14 +27,26 @@ window.AA = (function () {
     const res = await fetch(BASE_URL + url, {
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
         ...(options.headers || {})
       },
       ...options
     });
 
     if (!res.ok) {
-      throw new Error(`API error: ${res.status}`);
+      const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `API error: ${res.status}`);
     }
+
+     // 🔥 GESTION TOKEN EXPIRE
+  if (res.status === 401 || res.status === 403) {
+    sessionStorage.removeItem("tt_token");
+    sessionStorage.removeItem("tt_auth");
+
+    // redirection vers login
+    window.location.href = "/index";
+    return; // stop
+  }
 
     return res.json();
   }
@@ -80,6 +103,23 @@ window.AA = (function () {
       body: JSON.stringify(data)
     });
   }
+  async function updateClient(id, data) {
+    return request(`/clients/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+    async function deleteClient(id) {
+    return request(`/clients/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+    async function getClientStats(id) {
+    return request(`/clients/${id}/stats`);
+  }
+
 
   // =========================
   // 🔹 FACTURES
@@ -134,6 +174,14 @@ async function getFactures(status) {
     });
   }
 
+  async function getFacturesStats(){
+    return request('/factures/stats');
+  }
+
+  async function getRevenueStats(period){
+    return request(`/factures/revenue?period=${period}`);
+  }
+
 
 
   async function deleteFacture(id) {
@@ -167,6 +215,9 @@ async function getFactures(status) {
     getClients,
     getClient,
     createClient,
+    updateClient,
+    deleteClient,
+    getClientStats,
 
     getFactures,
     getFacture,
@@ -177,6 +228,8 @@ async function getFactures(status) {
     factureToDraft,
     factureToBasket,
     emptyTrash,
+    getFacturesStats,
+    getFacturesStats,
 
     getProduits
   };

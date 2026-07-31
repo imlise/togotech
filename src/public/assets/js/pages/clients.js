@@ -1,6 +1,5 @@
 'use strict';
 
-const API = 'http://localhost:3000/api/clients';
 
 document.addEventListener('DOMContentLoaded', () => {
   TTLayout.initShell({ page: 'clients', title: 'Clients' });
@@ -15,42 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- Appels API ---
 
-async function fetchClients() {
-  const response = await fetch(API);
-  if (!response.ok) throw new Error('Erreur lors du chargement des clients.');
-  return response.json();
-}
 
-async function fetchClientStats(id) {
-  const response = await fetch(`${API}/${id}/stats`);
-  if (!response.ok) throw new Error(`Erreur lors du chargement des stats du client ${id}.`);
-  return response.json(); // { totalFactures, totalMontant }
-}
+//createClient
+// update
+// deleteClient
 
-async function createClient(data) {
-  const response = await fetch(API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) throw new Error('Erreur lors de la création du client.');
-  return response.json();
-}
-
-async function updateClient(id, data) {
-  const response = await fetch(`${API}/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) throw new Error('Erreur lors de la modification du client.');
-  return response.json();
-}
-
-async function deleteClient(id) {
-  const response = await fetch(`${API}/${id}`, { method: 'DELETE' });
-  if (!response.ok) throw new Error('Erreur lors de la suppression du client.');
-}
 
 // --- Rendu ---
 
@@ -65,7 +33,8 @@ async function renderClients(query = '') {
 
   let clients;
   try {
-    clients = await fetchClients();
+    clients = await AA.getClients();
+    console.log(clients)
   } catch (err) {
     console.error(err);
     grid.innerHTML = '';
@@ -91,7 +60,7 @@ async function renderClients(query = '') {
   let statsList;
   try {
     statsList = await Promise.all(
-      clients.map(c => fetchClientStats(c.id).catch(() => ({ totalFactures: 0, totalMontant: 0 })))
+      clients.map(c => AA.getClientStats(c.id).catch(() => ({ totalFactures: 0, totalMontant: 0 })))
     );
   } catch (err) {
     console.error(err);
@@ -143,7 +112,7 @@ async function renderClients(query = '') {
       TTComponents.confirm({ title: 'Supprimer le client', message: 'Cette action est irréversible.', danger: true }).then(async ok => {
         if (!ok) return;
         try {
-          await deleteClient(btn.dataset.delete);
+          await AA.deleteClient(btn.dataset.delete);
           renderClients(query);
           Toast.success('Client supprimé.');
         } catch (err) {
@@ -201,10 +170,10 @@ function openClientModal(client = null) {
 
     try {
       if (client) {
-        await updateClient(client.id, data);
+        await AA.updateClient(client.id, data);
         Toast.success('Client modifié.');
       } else {
-        await createClient(data);
+        await AA.createClient(data);
         Toast.success('Client ajouté.');
       }
       TTComponents.closeModal();
