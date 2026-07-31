@@ -4,7 +4,7 @@ let banks = [];
 document.addEventListener('DOMContentLoaded', () => {
   TTLayout.initShell({ page: 'parametres', title: 'Paramètres' });
   document.getElementById('app-header').innerHTML = TTLayout.renderHeader({
-    breadcrumb: [{ label: 'Dashboard', href: 'dashboard.html' }, { label: 'Paramètres' }],
+    breadcrumb: [{ label: 'Dashboard', href: 'dashboard' }, { label: 'Paramètres' }],
   }).replace(/^<header class="app-header">|<\/header>$/g, '');
 
   loadSettings();
@@ -163,7 +163,7 @@ if (status === 401) {
       } else if (message.toLowerCase().includes('token') || message.toLowerCase().includes('authentif')) {
         Toast.error('Session expirée. Veuillez vous reconnecter.');
         // Optionnel : redirige vers login
-        // window.location.href = 'login.html';
+        // window.location.href = 'login';
       } else {
         Toast.error('Non autorisé.');
       }

@@ -32,25 +32,25 @@ window.TTLayout = (function () {
     {
       label: 'Principal',
       items: [
-        { id: 'dashboard', href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
-        { id: 'facture', href: 'facture.html', label: 'Facturation', icon: 'facture', badge: '+' },
-        { id: 'historique', href: 'historique.html', label: 'Historique', icon: 'historique' },
+        { id: 'dashboard', href: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+        { id: 'facture', href: 'facture', label: 'Facturation', icon: 'facture', badge: '+' },
+        { id: 'historique', href: 'historique', label: 'Historique', icon: 'historique' },
       ],
     },
     {
       label: 'Documents',
       items: [
-        { id: 'brouillons', href: 'brouillons.html', label: 'Brouillons', icon: 'brouillons', countKey: 'drafts' },
-        { id: 'corbeille', href: 'corbeille.html', label: 'Corbeille', icon: 'corbeille', countKey: 'trash' },
+        { id: 'brouillons', href: 'brouillons', label: 'Brouillons', icon: 'brouillons', countKey: 'drafts' },
+        { id: 'corbeille', href: 'corbeille', label: 'Corbeille', icon: 'corbeille', countKey: 'trash' },
       ],
     },
     {
       label: 'Gestion',
       items: [
-        { id: 'produits', href: 'produits.html', label: 'Produits', icon: 'produits' },
-        { id: 'clients', href: 'clients.html', label: 'Clients', icon: 'clients' },
-        { id: 'notifications', href: 'notifications.html', label: 'Notifications', icon: 'notifications', countKey: 'notifs' },
-        { id: 'parametres', href: 'parametres.html', label: 'Paramètres', icon: 'parametres' },
+        { id: 'produits', href: 'produits', label: 'Produits', icon: 'produits' },
+        { id: 'clients', href: 'clients', label: 'Clients', icon: 'clients' },
+        { id: 'notifications', href: 'notifications', label: 'Notifications', icon: 'notifications', countKey: 'notifs' },
+        { id: 'parametres', href: 'parametres', label: 'Paramètres', icon: 'parametres' },
       ],
     },
   ];
@@ -162,7 +162,7 @@ window.TTLayout = (function () {
       </button>
     `).join('')}</div>
     <div class="shell-panel__foot">
-      <a href="notifications.html" class="shell-panel__action">Voir toutes les notifications${unread ? ` (${unread})` : ''} →</a>
+      <a href="notifications" class="shell-panel__action">Voir toutes les notifications${unread ? ` (${unread})` : ''} →</a>
     </div>`;
   }
 
@@ -177,7 +177,7 @@ window.TTLayout = (function () {
         </div>
       </div>
       <nav class="shell-menu" aria-label="Menu utilisateur">
-        <a href="profil.html" class="shell-menu__item">
+        <a href="profil" class="shell-menu__item">
           <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
           Mon profil
         </a>
@@ -218,7 +218,7 @@ window.TTLayout = (function () {
           <button type="button" class="burger header-burger" id="headerBurgerBtn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="sidebar">
             <span></span><span></span><span></span>
           </button>
-          <a href="dashboard.html" class="app-header__brand" aria-label="${BRAND.fullName} — Accueil">
+          <a href="dashboard" class="app-header__brand" aria-label="${BRAND.fullName} — Accueil">
             <img src="${BRAND.logo}" alt="${BRAND.fullName}" />
           </a>
           ${bc ? bc : ''}
@@ -235,7 +235,7 @@ window.TTLayout = (function () {
           <button type="button" class="topbar-btn" id="themeToggleBtn" title="Activer/Désactiver le mode" aria-label="Mode clair/sombre">
             ${ICONS.theme}
           </button>
-          <a href="parametres.html" class="topbar-btn" aria-label="Paramètres">
+          <a href="parametres" class="topbar-btn" aria-label="Paramètres">
             ${ICONS.parametres}
           </a>
           <button type="button" class="topbar-btn" id="notifBtn" data-action="toggle-notifications" aria-label="Notifications${unread ? ` (${unread} non lues)` : ''}" aria-expanded="false" aria-haspopup="true">
@@ -286,7 +286,7 @@ window.TTLayout = (function () {
         <button class="burger" id="burgerBtn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="sidebar">
           <span></span><span></span><span></span>
         </button>
-        <a href="dashboard.html" class="mobile-bar__brand" aria-label="${BRAND.fullName} — Accueil">
+        <a href="dashboard" class="mobile-bar__brand" aria-label="${BRAND.fullName} — Accueil">
           <img src="${BRAND.logo}" alt="${BRAND.fullName}" />
         </a>
         <div class="mobile-bar__actions">
@@ -307,24 +307,24 @@ window.TTLayout = (function () {
   function renderMobileBottomNav() {
     return `
       <nav id="mobileBottomNav" class="mobile-bottom-nav" aria-label="Navigation mobile principale">
-        <a href="dashboard.html" class="mobile-bottom-nav__item${document.body.dataset.page === 'dashboard' ? ' is-active' : ''}">
+        <a href="dashboard" class="mobile-bottom-nav__item${document.body.dataset.page === 'dashboard' ? ' is-active' : ''}">
           ${ICONS.dashboard}
           <span>Accueil</span>
         </a>
-        <a href="clients.html" class="mobile-bottom-nav__item${document.body.dataset.page === 'clients' ? ' is-active' : ''}">
+        <a href="clients" class="mobile-bottom-nav__item${document.body.dataset.page === 'clients' ? ' is-active' : ''}">
           ${ICONS.clients}
           <span>Clients</span>
         </a>
-        <a href="facture.html" class="mobile-bottom-nav__item mobile-bottom-nav__item--center${document.body.dataset.page === 'facture' ? ' is-active' : ''}" aria-label="Nouvelle facture">
+        <a href="facture" class="mobile-bottom-nav__item mobile-bottom-nav__item--center${document.body.dataset.page === 'facture' ? ' is-active' : ''}" aria-label="Nouvelle facture">
           <span class="mobile-bottom-nav__add-icon">
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M11 4.5v13M4.5 11h13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </span>
         </a>
-        <a href="historique.html" class="mobile-bottom-nav__item${document.body.dataset.page === 'historique' ? ' is-active' : ''}">
+        <a href="historique" class="mobile-bottom-nav__item${document.body.dataset.page === 'historique' ? ' is-active' : ''}">
           ${ICONS.historique}
           <span>Historique</span>
         </a>
-        <a href="parametres.html" class="mobile-bottom-nav__item${document.body.dataset.page === 'parametres' ? ' is-active' : ''}">
+        <a href="parametres" class="mobile-bottom-nav__item${document.body.dataset.page === 'parametres' ? ' is-active' : ''}">
           ${ICONS.parametres}
           <span>Paramètres</span>
         </a>
@@ -391,7 +391,7 @@ function logout() {
   // sessionStorage.clear();
 
   // 🔄 Redirection vers login
-  window.location.href = 'index.html';
+  window.location.href = 'index';
 }
 
   function bindEvents() {
@@ -518,7 +518,7 @@ function logout() {
       document.addEventListener('keydown', e => {
         if (e.target?.id === 'globalSearch' && e.key === 'Enter') {
           const q = e.target.value.trim();
-          window.location.href = q ? `historique.html?search=${encodeURIComponent(q)}` : 'historique.html';
+          window.location.href = q ? `historique?search=${encodeURIComponent(q)}` : 'historique';
         }
         if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
           e.preventDefault();

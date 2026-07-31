@@ -165,7 +165,7 @@ function renderRecentDocs() {
   if (!tbody) return;
   const docs = getDocs().slice(0, 6);
   tbody.innerHTML = docs.map(d => `
-    <tr style="cursor:pointer" onclick="location.href='document.html?id=${d.id}'">
+    <tr style="cursor:pointer" onclick="location.href='document?id=${d.id}'">
       <td class="td-mono">${d.numero}</td>
       <td><span class="badge badge--${d.type}">${d.type === 'facture' ? 'Facture' : d.type === 'proforma' ? 'Proforma' : 'Devis'}</span></td>
       <td class="truncate" style="max-width:160px">${d.client}</td>

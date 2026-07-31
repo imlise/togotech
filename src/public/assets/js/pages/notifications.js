@@ -3,7 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   TTLayout.initShell({ page: 'notifications', title: 'Notifications' });
   document.getElementById('app-header').innerHTML = TTLayout.renderHeader({
-    breadcrumb: [{ label: 'Dashboard', href: 'dashboard.html' }, { label: 'Notifications' }],
+    breadcrumb: [{ label: 'Dashboard', href: 'dashboard' }, { label: 'Notifications' }],
   }).replace(/^<header class="app-header">|<\/header>$/g, '');
 
   renderNotifications();

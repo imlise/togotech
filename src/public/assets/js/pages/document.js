@@ -27,7 +27,7 @@ if (id) {
 
 
   if (!doc) {
-    container.innerHTML = `<div class="empty-state"><h2 class="empty-state__title">Document introuvable</h2><a href="historique.html" class="btn btn--secondary" style="margin-top:var(--space-4)">Retour à l'historique</a></div>`;
+    container.innerHTML = `<div class="empty-state"><h2 class="empty-state__title">Document introuvable</h2><a href="historique" class="btn btn--secondary" style="margin-top:var(--space-4)">Retour à l'historique</a></div>`;
     return;
   }
 
@@ -51,8 +51,8 @@ try {
 
   document.getElementById('app-header').innerHTML = TTLayout.renderHeader({
     breadcrumb: [
-      { label: 'Dashboard', href: 'dashboard.html' },
-      { label: 'Historique', href: 'historique.html' },
+      { label: 'Dashboard', href: 'dashboard' },
+      { label: 'Historique', href: 'historique' },
       { label: doc.reference },
     ],
   }).replace(/^<header class="app-header">|<\/header>$/g, '');
@@ -92,7 +92,7 @@ const typeLabel = doc.isProforma ? 'Proforma' : 'Facture';
         <button class="btn btn--secondary btn--sm" id="duplicateDoc">Dupliquer</button> -->
         <button class="btn btn--secondary btn--sm" id="printDoc">Imprimer</button>
         <button class="btn btn--navy btn--sm" id="downloadPdfDoc">Télécharger PDF</button>
-        <a href="facture.html?id=${doc.id}&edit=1" class="btn btn--primary btn--sm">Modifier</a>
+        <a href="facture?id=${doc.id}&edit=1" class="btn btn--primary btn--sm">Modifier</a>
       </div>
     </div>
 
@@ -189,7 +189,7 @@ const typeLabel = doc.isProforma ? 'Proforma' : 'Facture';
     wrap.style.height = (page.offsetHeight * zoom) + 'px';
   })();
   document.getElementById('duplicateDoc')?.addEventListener('click', () => {
-    window.location.href = `facture.html?id=${doc.id}&edit=1`;
+    window.location.href = `facture?id=${doc.id}&edit=1`;
     Toast.info('Dupliquez et modifiez le document.');
   });
   document.getElementById('deleteDoc')?.addEventListener('click', async () => {
@@ -203,7 +203,7 @@ const typeLabel = doc.isProforma ? 'Proforma' : 'Facture';
     Toast.success('Facture supprimée avec succès.');
 
     // setTimeout(() => {
-    //   location.href = 'historique.html';
+    //   location.href = 'historique';
     // }, 600);
 
   } catch (err) {

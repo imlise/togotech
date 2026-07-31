@@ -4,7 +4,7 @@ let rowsCount ;
 document.addEventListener('DOMContentLoaded', () => {
   TTLayout.initShell({ page: 'corbeille', title: 'Corbeille' });
   document.getElementById('app-header').innerHTML = TTLayout.renderHeader({
-    breadcrumb: [{ label: 'Dashboard', href: 'dashboard.html' }, { label: 'Corbeille' }],
+    breadcrumb: [{ label: 'Dashboard', href: 'dashboard' }, { label: 'Corbeille' }],
   }).replace(/^<header class="app-header">|<\/header>$/g, '');
 
   renderTrash();

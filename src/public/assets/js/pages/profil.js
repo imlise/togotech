@@ -3,7 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   TTLayout.initShell({ page: 'profil', title: 'Profil' });
   document.getElementById('app-header').innerHTML = TTLayout.renderHeader({
-    breadcrumb: [{ label: 'Dashboard', href: 'dashboard.html' }, { label: 'Profil' }],
+    breadcrumb: [{ label: 'Dashboard', href: 'dashboard' }, { label: 'Profil' }],
   }).replace(/^<header class="app-header">|<\/header>$/g, '');
 
   const profile = TT.getProfile();

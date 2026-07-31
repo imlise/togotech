@@ -3,7 +3,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
   TTLayout.initShell({ page: 'brouillons', title: 'Brouillons' });
   document.getElementById('app-header').innerHTML = TTLayout.renderHeader({
-    breadcrumb: [{ label: 'Dashboard', href: 'dashboard.html' }, { label: 'Brouillons' }],
+    breadcrumb: [{ label: 'Dashboard', href: 'dashboard' }, { label: 'Brouillons' }],
   }).replace(/^<header class="app-header">|<\/header>$/g, '');
 
   const drafts = await AA.getFactures('draft');
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <td class="text-secondary">${TT.formatDateTime(d.updatedAt)}</td>
       <td>
         <div class="row-actions" style="opacity:1">
-          <a href="facture.html?id=${d.id}&edit=1" class="btn btn--secondary btn--sm">Reprendre</a>
+          <a href="facture?id=${d.id}&edit=1" class="btn btn--secondary btn--sm">Reprendre</a>
           <button class="action-btn action-btn--danger" data-id="${d.id}" aria-label="Supprimer"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
         </div>
       </td>
@@ -57,7 +57,7 @@ tbody.innerHTML = await buildRows(drafts);
   //     <td class="text-secondary">${TT.formatDateTime(d.updatedAt)}</td>
   //     <td>
   //       <div class="row-actions" style="opacity:1">
-  //         <a href="facture.html?id=${d.id}&edit=1" class="btn btn--secondary btn--sm">Reprendre</a>
+  //         <a href="facture?id=${d.id}&edit=1" class="btn btn--secondary btn--sm">Reprendre</a>
   //         <button class="action-btn action-btn--danger" data-id="${d.id}" aria-label="Supprimer"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
   //       </div>
   //     </td>

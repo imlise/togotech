@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             breadcrumb: [
                 {
                     label: "Dashboard",
-                    href: "dashboard.html"
+                    href: "dashboard"
                 },
                 {
                     label: "Produits"

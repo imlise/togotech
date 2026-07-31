@@ -7,7 +7,7 @@ let docsCache = [];
 document.addEventListener('DOMContentLoaded', async () => {
   TTLayout.initShell({ page: 'historique', title: 'Historique' });
   document.getElementById('app-header').innerHTML = TTLayout.renderHeader({
-    breadcrumb: [{ label: 'Dashboard', href: 'dashboard.html' }, { label: 'Historique' }],
+    breadcrumb: [{ label: 'Dashboard', href: 'dashboard' }, { label: 'Historique' }],
   }).replace(/^<header class="app-header">|<\/header>$/g, '');
 
   await loadData();

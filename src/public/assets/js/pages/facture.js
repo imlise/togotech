@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (header) {
     header.innerHTML = TTLayout.renderHeader({
       breadcrumb: [
-        { label: 'Dashboard', href: 'dashboard.html' },
+        { label: 'Dashboard', href: 'dashboard' },
         { label: 'Nouvelle facture' },
       ],
     }).replace(/^<header class="app-header">|<\/header>$/g, '');
@@ -557,7 +557,7 @@ document.getElementById('fPaye').addEventListener('change', (e) => {
 
 
     if (id) {
-      setTimeout(() => { window.location.href = `document.html?id=${id}`; }, 800);
+      setTimeout(() => { window.location.href = `document?id=${id}`; }, 800);
     }
   }
 

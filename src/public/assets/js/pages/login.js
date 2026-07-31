@@ -98,7 +98,7 @@ Auth.login({
         );
       }
 
-      window.location.href = "dashboard.html";
+      window.location.href = "dashboard";
     } catch (err) {
       banner.textContent =
         err.message || "Une erreur est survenue. Réessayez.";

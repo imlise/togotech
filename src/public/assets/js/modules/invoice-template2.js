@@ -4,7 +4,7 @@
  * InvoiceTemplate
  * Source UNIQUE de la mise en page d'une facture/proforma.
  * Utilisé par : la page facture (aperçu en direct), la page document
- * (aperçu dans l'historique) et l'export PDF (facture.html, historique).
+ * (aperçu dans l'historique) et l'export PDF (facture, historique).
  * Toute modification de mise en page ne doit être faite qu'ici pour que
  * les trois rendus restent identiques.
  */
