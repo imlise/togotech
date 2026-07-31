@@ -121,6 +121,53 @@ const token = sessionStorage.getItem("tt_token");
   }
 
 
+
+
+
+
+   // =========================
+  // 🔹 Utilisateurs
+  // =========================
+
+  async function getUtilisateurs() {
+    return request('/clients');
+  }
+  async function getUtilisateur(id) {
+    return request(`/clients/${id}`);
+  }
+
+  async function createUtilisateur(data) {
+    return request('/clients', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+  async function updateUtilisateur(id, data) {
+    return request(`/clients/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+    async function deleteUtilisateur(id) {
+    return request(`/clients/${id}`, {
+      method: 'DELETE'
+    });
+  }
+// =========================
+// 🔹 Authentification
+// =========================
+
+async function changePassword(data) {
+  return request('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+
+
+
   // =========================
   // 🔹 FACTURES
   // =========================
@@ -230,6 +277,14 @@ async function getFactures(status) {
     emptyTrash,
     getFacturesStats,
     getFactureRevenueStats,
+
+
+    getUtilisateurs,
+    getUtilisateur,
+    createUtilisateur,
+    updateUtilisateur,
+    deleteUtilisateur,
+    changePassword,
 
     getProduits
   };

@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   document.getElementById('saveSettings')?.addEventListener('click', saveSettings);
 
+  document.getElementById('changePasswordBtn')?.addEventListener('click', changePasswordHandler);
+
   document.getElementById('logoUploadBtn')?.addEventListener('click', () => document.getElementById('logoInput').click());
   document.getElementById('logoInput')?.addEventListener('change', e => {
     const file = e.target.files[0];
@@ -98,6 +100,86 @@ function renderBanks() {
     });
   });
 }
+
+
+async function changePasswordHandler() {
+  const currentPassword = document.getElementById('currentPassword').value.trim();
+  const newPassword = document.getElementById('newPassword').value.trim();
+  const confirmPassword = document.getElementById('confirmPassword').value.trim();
+
+  // Validations
+  if (!currentPassword) {
+    Toast.error('Veuillez entrer votre mot de passe actuel.');
+    return;
+  }
+
+  if (!newPassword) {
+    Toast.error('Veuillez entrer un nouveau mot de passe.');
+    return;
+  }
+
+  if (newPassword.length < 8) {
+    Toast.error('Le mot de passe doit contenir au moins 8 caractères.');
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    Toast.error('Les mots de passe ne correspondent pas.');
+    return;
+  }
+
+  if (newPassword === currentPassword) {
+    Toast.error('Le nouveau mot de passe doit être différent de l\'actuel.');
+    return;
+  }
+
+  try {
+    const response = await AA.changePassword({
+      motDePasse: currentPassword,
+      motDePasseNouveau: newPassword
+    });
+
+    if (response.success || response.message) {
+      Toast.success('Mot de passe modifié avec succès.');
+      
+      // Réinitialise les champs
+      document.getElementById('currentPassword').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+    } else {
+      Toast.error(response.message || 'Erreur lors de la modification du mot de passe.');
+    }
+  } catch (error) {
+    console.error('Erreur changement password:', error);
+    
+    // ✅ NOUVELLE GESTION D'ERREUR
+    const status = error.status;
+    const message = error.data?.message || error.message;
+
+if (status === 401) {
+      // Différencie les causes de 401
+      if (message.toLowerCase().includes('password') || message.toLowerCase().includes('mot de passe')) {
+        Toast.error('Mot de passe actuel incorrect.');
+      } else if (message.toLowerCase().includes('token') || message.toLowerCase().includes('authentif')) {
+        Toast.error('Session expirée. Veuillez vous reconnecter.');
+        // Optionnel : redirige vers login
+        // window.location.href = 'login.html';
+      } else {
+        Toast.error('Non autorisé.');
+      }
+    } else if (status === 400) {
+      Toast.error(`${message}`);
+    } else if (status === 404) {
+      Toast.error('Utilisateur non trouvé.');
+    } else if (status === 500) {
+      Toast.error('Erreur serveur. Veuillez réessayer plus tard.');
+    } else {
+      Toast.error(`${message || 'Erreur lors de la modification du mot de passe.'}`);
+    }
+  }
+}
+
+
 
 function escapeAttr(str) {
   return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');

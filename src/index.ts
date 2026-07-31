@@ -8,6 +8,7 @@ import utilisateursRouter from "./routes/utilisateurs"
 import loginRouter from "./routes/login"
 import ligneProduitsRouter from "./routes/ligneProduit"
 import { authMiddleware } from "./auth/auth";
+import authRoutes from "./routes/auth"
 
 const app = express();
 app.use(express.json());
@@ -42,7 +43,7 @@ app.use("/api/produits", produitsRouter);
 app.use("/api/clients", clientsRouter);
 app.use("/api/utilisateurs", utilisateursRouter);
 app.use('/api/ligne-produits', ligneProduitsRouter);
-
+app.use("/api/auth", authRoutes);
  
 
 
