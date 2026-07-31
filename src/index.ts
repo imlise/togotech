@@ -43,6 +43,8 @@ app.use("/api/clients", clientsRouter);
 app.use("/api/utilisateurs", utilisateursRouter);
 app.use('/api/ligne-produits', ligneProduitsRouter);
 
+ 
+
 
 app.get('/api/test', authMiddleware, (req:any, res:any) => {
   res.json({
