@@ -178,7 +178,7 @@ async function getFactures(status) {
     return request('/factures/stats');
   }
 
-  async function getRevenueStats(period){
+  async function getFactureRevenueStats(period){
     return request(`/factures/revenue?period=${period}`);
   }
 
@@ -229,7 +229,7 @@ async function getFactures(status) {
     factureToBasket,
     emptyTrash,
     getFacturesStats,
-    getFacturesStats,
+    getFactureRevenueStats,
 
     getProduits
   };

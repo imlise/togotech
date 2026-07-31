@@ -207,8 +207,7 @@ async function initChart(period = currentPeriod) {
 
   let stats;
   try {
-    console.log(AA.getRevenueStats); 
-    stats = await AA.getRevenueStats(period);
+    stats = await AA.getFactureRevenueStats(period);
   } catch (err) {
     console.error(err);
     Toast.error('Impossible de charger le chiffre d\'affaires.');
