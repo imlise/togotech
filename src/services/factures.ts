@@ -412,16 +412,16 @@ export async function getRevenueStats(period: '6months' | '12months' = '6months'
   try {
     const result = await db
       .select({
-        month: sql<string>`strftime('%Y-%m', datetime(${facturesTable.dateDePaiement}, 'unixepoch'))`,
+        month: sql<string>`strftime('%Y-%m', datetime(${facturesTable.dateDePaiement}))`,
         total: sql<number>`sum(${facturesTable.totalTtc})`,
       })
       .from(facturesTable)
       .where(
         sql`${facturesTable.dateDePaiement} IS NOT NULL
-            AND datetime(${facturesTable.dateDePaiement}, 'unixepoch') >= datetime('now', '-${sql.raw(String(months))} months')`
+            AND datetime(${facturesTable.dateDePaiement}) >= datetime('now', '-${sql.raw(String(months))} months')`
       )
-      .groupBy(sql`strftime('%Y-%m', datetime(${facturesTable.dateDePaiement}, 'unixepoch'))`)
-      .orderBy(sql`strftime('%Y-%m', datetime(${facturesTable.dateDePaiement}, 'unixepoch')) asc`);
+      .groupBy(sql`strftime('%Y-%m', datetime(${facturesTable.dateDePaiement}))`)
+      .orderBy(sql`strftime('%Y-%m', datetime(${facturesTable.dateDePaiement})) asc`);
 
     console.log('✅ Stats de revenu récupérées !');
     return { success: true, data: result };

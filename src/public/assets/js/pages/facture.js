@@ -312,8 +312,9 @@ const InvoiceEditor = (function () {
   //   return dateString ? new Date(dateString).getTime() : null;
   // } tosuppr
 let etat ;
+let estPaye = false
 document.getElementById('fPaye').addEventListener('change', (e) => {
-  const estPaye = e.target.value === "true";
+   estPaye = e.target.value === "true";
 
   console.log("Nouvelle valeur :", estPaye);
 
@@ -529,6 +530,12 @@ document.getElementById('fPaye').addEventListener('change', (e) => {
     ///////////////////////////////////    Enregistrement de facture   /////////////////////////////////////////////////////////////////////////////////////////
 
     if (status === 'sent') {
+          if (editId) {
+      result = await editToBackend(editId, data);
+      console.info('Facture editée avec  succēs:', result);
+      Toast.success('Facture editée avec  succēs');
+
+    }else{
       try {
         result = await postToBackend(data);
 
@@ -539,6 +546,8 @@ document.getElementById('fPaye').addEventListener('change', (e) => {
       } catch (error) {
         console.error('Erreur d’envoi parallèle vers le backend:', error);
       }
+    }
+      
 
     }
     const id = result.id;
