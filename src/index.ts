@@ -47,12 +47,7 @@ app.use("/api/auth", authRoutes);
  
 
 
-app.get('/api/test', authMiddleware, (req:any, res:any) => {
-  res.json({
-    message: "OK",
-    user: req.user
-  });
-});
+
 
 
 const PORT = 3000;

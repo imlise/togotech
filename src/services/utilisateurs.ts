@@ -127,8 +127,20 @@ export async function updateUtilisateur(
             .update(utilisateursTable)
             .set(donnees)
             .where(eq(utilisateursTable.id, id));
+          
+          // Récupérer et retourner l'utilisateur modifié
+        const utilisateur = await db
+            .select()
+            .from(utilisateursTable)
+            .where(eq(utilisateursTable.id, id))
+            .limit(1);
 
         console.log("✅ Utilisateur modifié");
+        
+        return utilisateur[0];
+
+;
+
 
     } catch (error) {
 

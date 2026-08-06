@@ -132,11 +132,18 @@ router.put("/:id", async (req, res) => {
       });
     }
 
-    await updateUtilisateur(id, req.body);
+    const utilisateur = await updateUtilisateur(id, req.body);
+
+     if (!utilisateur) {
+      return res.status(404).json({
+        message: "Utilisateur introuvable.",
+      });
+    }
 
     res.status(200).json({
       success: true,
       message: "Utilisateur mis à jour avec succès.",
+      utilisateur,
     });
   } catch (error) {
     res.status(500).json({

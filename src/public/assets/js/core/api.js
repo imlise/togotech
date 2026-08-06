@@ -130,20 +130,20 @@ const token = sessionStorage.getItem("tt_token");
   // =========================
 
   async function getUtilisateurs() {
-    return request('/clients');
+    return request('/utilisateurs');
   }
   async function getUtilisateur(id) {
-    return request(`/clients/${id}`);
+    return request(`/utilisateurs/${id}`);
   }
 
   async function createUtilisateur(data) {
-    return request('/clients', {
+    return request('/utilisateurs', {
       method: 'POST',
       body: JSON.stringify(data)
     });
   }
   async function updateUtilisateur(id, data) {
-    return request(`/clients/${id}`, {
+    return request(`/utilisateurs/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
     });

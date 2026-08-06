@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('profileEmail').textContent = profile.email;
   document.getElementById('profileAvatar').textContent = profile.name.charAt(0).toUpperCase();
 
-  const user = JSON.parse(sessionStorage.getItem("tt_user"));
 
   document.getElementById('saveProfile')?.addEventListener('click', async () => {
     TT.saveProfile({
@@ -28,15 +27,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('profileName').textContent = document.getElementById('pName').value;
 
-    const data = {
-      "nomUtilisateur":document.getElementById('pName').value.trim(),
-    }
+    
     
     try {
-    await AA.updateUtilisateur(user.id,data);
+  let user = JSON.parse(sessionStorage.getItem("tt_user"));
+  const data = {
+      "nomUtilisateur":document.getElementById('pName').value.trim(),
+    }
+
+    console.log(user);
+
+    const response = await AA.updateUtilisateur(user.id,data);
+
+    const updatedUtilisateur = response.utilisateur;
+    user = {
+      "id":updatedUtilisateur.id,
+      "nom":updatedUtilisateur.nomUtilisateur,
+      "email":updatedUtilisateur.email,
+      "role":updatedUtilisateur.role,
+      "actif":true,
+    }
+    sessionStorage.setItem("tt_user",JSON.stringify(user));
+    location.reload();
+
     } catch (error) {
       console.log("Error : ", error)
     }
+    
 
     Toast.success('Profil mis à jour.');
   });
