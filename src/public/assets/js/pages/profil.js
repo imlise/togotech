@@ -16,7 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('profileEmail').textContent = profile.email;
   document.getElementById('profileAvatar').textContent = profile.name.charAt(0).toUpperCase();
 
-  document.getElementById('saveProfile')?.addEventListener('click', () => {
+  const user = JSON.parse(sessionStorage.getItem("tt_user"));
+
+  document.getElementById('saveProfile')?.addEventListener('click', async () => {
     TT.saveProfile({
       ...profile,
       name: document.getElementById('pName').value.trim(),
@@ -25,6 +27,17 @@ document.addEventListener('DOMContentLoaded', () => {
       timezone: document.getElementById('pTz').value,
     });
     document.getElementById('profileName').textContent = document.getElementById('pName').value;
+
+    const data = {
+      "nomUtilisateur":document.getElementById('pName').value.trim(),
+    }
+    
+    try {
+    await AA.updateUtilisateur(user.id,data);
+    } catch (error) {
+      console.log("Error : ", error)
+    }
+
     Toast.success('Profil mis à jour.');
   });
 });

@@ -54,7 +54,8 @@ export async function login(
       token, // 👈 IMPORTANT
       utilisateur: {
         id: utilisateur.id,
-        nomUtilisateur: utilisateur.nomUtilisateur,
+        email:utilisateur.email,
+        nom: utilisateur.nomUtilisateur,
         role: utilisateur.role,
         actif: utilisateur.actif,
       },

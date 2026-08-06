@@ -56,8 +56,9 @@ window.TTLayout = (function () {
   ];
 
   function getUserInfo() {
-    const email = sessionStorage.getItem('tt_user_email') || 'admin@togotech.com';
-    const name = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const utilisateur = JSON.parse(sessionStorage.getItem("tt_user"));
+    const email = utilisateur.email;
+    const name = utilisateur.nom;
     return { email, name, initial: name.charAt(0).toUpperCase() };
   }
 

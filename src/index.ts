@@ -35,7 +35,7 @@ app.get("/", (req, res) => {
 app.use("/api/login", loginRouter);
 
 
-app.use("/api", authMiddleware);
+// app.use("/api", authMiddleware);
 
 // routes protégées
 app.use("/api/factures", facturesRouter);
