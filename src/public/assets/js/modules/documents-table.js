@@ -435,6 +435,7 @@ window.FacturesActions = {
     }
 
       let doc_send = {
+            ...facture,
     numero : facture.reference,
     date : facture.createdAt,
     client : client.nom,
@@ -444,8 +445,12 @@ window.FacturesActions = {
     objet:facture.objet,
     conditions: facture.condition,
     lines:lines,
-    ...facture
+
   };
+
+  console.log(client);
+  console.log(doc_send);
+  console.log(facture);
 
     exportNode.innerHTML = InvoiceTemplate.render(doc_send, TT.getSettings());
 
