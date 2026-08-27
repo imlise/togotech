@@ -129,7 +129,7 @@ async function renderStats() {
       <div class="stat-card__deco" aria-hidden="true">${c.deco}</div>
       <div class="stat-card__head">
         <div class="stat-card__icon"><svg width="22" height="22" viewBox="0 0 16 16" fill="none">${c.icon}</svg></div>
-        <span class="stat-card__trend${c.trendType === 'down' ? ' stat-card__trend--down' : c.trendType === 'flat' ? ' stat-card__trend--flat' : ''}">${c.trend}</span>
+        <!-- #pas_encore <span class="stat-card__trend${c.trendType === 'down' ? ' stat-card__trend--down' : c.trendType === 'flat' ? ' stat-card__trend--flat' : ''}">${c.trend}</span> -->
       </div>
       <div class="stat-card__body">
         <div class="stat-card__value text-mono" data-count="${c.value}" data-currency="${c.currency || false}">0</div>

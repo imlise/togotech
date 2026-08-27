@@ -53,6 +53,7 @@ function mapFactureToDoc(f) {
     devise: 'FCFA',
     date: f.dateDePaiement ? new Date(f.createdAt) : null,
     status: f.dateDePaiement ? 'paid' : 'sent',
+    etat: f.etat,
   };
 }
 

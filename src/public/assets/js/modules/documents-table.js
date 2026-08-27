@@ -141,7 +141,7 @@ window.DocumentsTable = (function () {
         <td class="text-secondary truncate" style="max-width:180px">${doc.objet}</td>
         <td class="td-mono">${TT.formatCurrency(doc.montant, doc.devise || 'FCFA')}</td>
         <td class="text-secondary">${TT.formatDate(doc.date)}</td>
-        <td>${statusBadge(doc.status)}</td>
+        <td>${statusBadge(doc.etat)}</td>
         <td>
           <div class="row-actions">
             <a href="document?id=${doc.id}" class="action-btn"  title="Voir" data-tooltip="Voir"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7s2.5-5 6-5 6 5 6 5-2.5 5-6 5S1 7 1 7Z" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7" r="1.5" stroke="currentColor" stroke-width="1.2"/></svg></a>

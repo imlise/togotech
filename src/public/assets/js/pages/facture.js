@@ -327,6 +327,7 @@ document.getElementById('fPaye').addEventListener('change', (e) => {
     let clientId = null;
     try {
       const clients = await AA.getClients();
+      console.log(clients);
       const selectedClient = clients.find(client => client.nom === formData.client);
       clientId = selectedClient?.id ?? null;
     } catch (error) {
@@ -499,7 +500,10 @@ document.getElementById('fPaye').addEventListener('change', (e) => {
 
     if (status === 'draft') {
 
-      if (data.status === 'draft') {
+      const facture = await AA.getFacture(editId);
+
+
+      if (facture.status === 'draft') {
 
         Toast.info('Déjà un brouillon.');
         return;
@@ -509,7 +513,7 @@ document.getElementById('fPaye').addEventListener('change', (e) => {
 
 
           data.status = status;
-          result = await editToBackend(data);
+          result = await editToBackend(editId,data);
           TT.addNotification(
             'draft',
             `Brouillon ${data.numero} enregistré.`
